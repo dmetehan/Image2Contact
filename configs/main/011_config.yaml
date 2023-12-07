@@ -1,0 +1,11 @@
+OPTION: "jointmaps_rgb_bodyparts"
+PRETRAINED: False
+COPY_RGB_WEIGHTS: False
+TARGET_SIZE: [112, 112]
+BODYPARTS_DIR: "bodyparts_split"
+DEPTHMAPS_DIR: "depth_maps"
+AUGMENTATIONS: [hflip, crop]
+SEGMENTATION: True  # True: 21 + 21 dimensional labels, False: 21 * 21 dimensional labels
+LR: 0.001
+BATCH_SIZE: 16
+EPOCHS: 20
