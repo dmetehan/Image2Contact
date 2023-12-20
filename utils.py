@@ -93,3 +93,39 @@ def find_last_values_tensorboard(log_dir, tag):
     scalar_events = event_acc.Scalars(tag)
     assert len(scalar_events) > 0, f"No events found for tag '{tag}' in {log_dir}."
     return scalar_events[-1].value
+
+
+def get_adj_mat():
+    A = np.zeros((21, 21))
+    A[0, 1] = A[1, 0] = 1
+    A[1, 2] = A[2, 1] = 1
+    A[0, 2] = A[2, 0] = 1
+    A[2, 3] = A[3, 2] = 1
+    A[2, 4] = A[4, 2] = 1
+    A[3, 5] = A[5, 3] = 1
+    A[3, 15] = A[15, 3] = 1
+    A[3, 16] = A[16, 3] = 1
+    A[4, 6] = A[6, 4] = 1
+    A[4, 15] = A[15, 4] = 1
+    A[4, 16] = A[16, 4] = 1
+    A[5, 6] = A[6, 5] = 1
+    A[5, 7] = A[7, 5] = 1
+    A[6, 8] = A[8, 6] = 1
+    A[7, 8] = A[8, 7] = 1
+    A[7, 9] = A[9, 7] = 1
+    A[7, 10] = A[10, 7] = 1
+    A[8, 9] = A[9, 8] = 1
+    A[8, 10] = A[10, 8] = 1
+    A[9, 11] = A[11, 9] = 1
+    A[10, 12] = A[12, 10] = 1
+    A[11, 13] = A[13, 11] = 1
+    A[12, 14] = A[14, 12] = 1
+    A[15, 17] = A[17, 15] = 1
+    A[16, 18] = A[18, 16] = 1
+    A[17, 19] = A[19, 17] = 1
+    A[18, 20] = A[20, 18] = 1
+    assert np.array_equal(A, np.transpose(A)), "Adjacency matrix is not symmetrical!"
+    # row - normalized
+    A = A / np.sum(A, axis=0)
+    assert np.array_equal(np.sum(A, axis=0), np.ones((A.shape[0])))
+    return A

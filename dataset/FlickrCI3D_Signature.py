@@ -356,7 +356,7 @@ class FlickrCI3DSignature(Dataset):
         else:
             raise NotImplementedError()
 
-        self.do_augmentations(data, augment)
+        data = self.do_augmentations(data, augment)
         return idx, data, torch.tensor(label)
 
     def do_augmentations(self, data, augment):
@@ -387,7 +387,8 @@ class FlickrCI3DSignature(Dataset):
                                                      (2, 0, 1)).astype(np.float32) / 255
             elif aug == Aug.rotate:
                 # TODO: Implement random rotations
-                pass
+                continue
+        return data
 
 
 def init_datasets_with_cfg(train_dir, test_dir, cfg, num_workers=8):
