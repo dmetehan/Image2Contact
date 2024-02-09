@@ -1,7 +1,7 @@
 import torch
-import torch.nn as nn
 from torch import nn, optim
 
+from models.custom_loss import IoUBCELoss
 from utils import Options
 
 
@@ -68,7 +68,8 @@ def initialize_model(cfg, device, finetune=False):
     model = ContactSignatureModel(backbone="resnet50", weights="IMAGENET1K_V2" if cfg.PRETRAINED else None,
                                   option=cfg.OPTION, copy_rgb_weights=cfg.COPY_RGB_WEIGHTS, finetune=finetune,
                                   segmentation=cfg.SEGMENTATION)
-    loss_fn = nn.BCEWithLogitsLoss()
+    # loss_fn = nn.BCEWithLogitsLoss()
+    loss_fn = IoUBCELoss()
     optimizer = optim.AdamW(model.parameters(), lr=cfg.LR, weight_decay=1e-4)
     return model, optimizer, loss_fn
 
