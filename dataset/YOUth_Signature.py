@@ -1,3 +1,5 @@
+import itertools
+import json
 import os
 from collections import defaultdict
 
@@ -14,18 +16,29 @@ from torch.utils.data.sampler import WeightedRandomSampler
 
 from utils import Aug, Options, parse_config
 
-SET_SPLITS = {'train': ['B48446', 'B56392', 'B00738', 'B00501', 'B43691', 'B64172', 'B44801', 'B75514', 'B58671', 'B75027', 'B55777', 'B48098', 'B42568', 'B78799', 'B33892', 'B51920', 'B37295', 'B40508', 'B00230', 'B51311', 'B00157', 'B00432', 'B35191', 'B82756', 'B64612', 'B36241', 'B61501', 'B51848', 'B35574', 'B00071', 'B80924', 'B49702', 'B80116', 'B60004', 'B75777', 'B59400', 'B83286', 'B71467', 'B72088', 'B33718', 'B40295', 'B41974', 'B77168', 'B81926', 'B47859', 'B41645', 'B69982', 'B39657', 'B61791', 'B35985'],
-              'val': ['B45742', 'B73095', 'B00267', 'B74193', 'B45111', 'B54074', 'B00402', 'B48908', 'B38777', 'B64396', 'B70930', 'B60483', 'B67411', 'B36445', 'B54732', 'B70410', 'B78220', 'B60741', 'B68344', 'B00018'],
-              'test': ['B44040', 'B66340', 'B62722', 'B45358', 'B46724', 'B72504', 'B49249', 'B83755', 'B50284', 'B77974', 'B63936', 'B34489', 'B62594', 'B56066', 'B00836', 'B49427', 'B71725', 'B53434', 'B46237', 'B41317']}
+# Using folds from Pose2Contact
+FOLDS = [["B78799", "B82756", "B00157", "B51311", "B60483", "B61791", "B68344", "B53434", "B72504", "B87499",
+          "B70930", "B00501", "B41317", "B75777", "B41974", "B42568", "B61501", "B33718", "B85387", "B51848"],
+         ["B45742", "B47859", "B64612", "B80116", "B44040", "B54074", "B00402", "B51920", "B71725", "B55777",
+          "B63936", "B00836", "B70410", "B67411", "B48098", "B66340", "B69982", "B64396", "B39886", "B56066"],
+         ["B71467", "B43691", "B41645", "B58671", "B84543", "B00432", "B33892", "B73095", "B56392",
+          "B36445", "B49702", "B78220", "B48446", "B72088", "B40508", "B86218", "B59400", "B35985", "B49249"],
+         ["B60004", "B75027", "B62594", "B49427", "B00071", "B35574", "B46724", "B75514", "B60741", "B62722",
+          "B00738", "B00230", "B65854", "B45358", "B46237", "B40295", "B35191", "B81926", "B34489", "B83755"],
+         ["B87817", "B00267", "B45111", "B36241", "B77168", "B44801", "B74193", "B37295", "B50284", "B39657",
+          "B77974", "B48908", "B38777", "B80924", "B00018", "B83286", "B62414", "B84259", "B64172", "B54732"]]
 
+
+# TODO: Add YOUth_signature_annotations.csv
 
 # Images should be cropped around interacting people pairs before using this class.
 class YOUth10mSignature(Dataset):
     def __init__(self, root_dir, camera='cam1', transform=None, target_transform=None, option=Options.jointmaps,
                  target_size=(224, 224), augment=(), recalc_joint_hmaps=False, bodyparts_dir=None, depthmaps_dir=None,
-                 _set=None, train_frac=None):
-        global SET_SPLITS
-        set_subjects = SET_SPLITS[_set]
+                 _set=None, train_frac=None, fold=0):
+        global FOLDS
+        self.fold_sets = self.convert_folds_to_sets()
+        set_subjects = self.fold_sets[fold][_set]
         self._set = _set
         self.option = option
         if Aug.crop in augment:
@@ -70,6 +83,16 @@ class YOUth10mSignature(Dataset):
         self.debug_printed = False
         self.color_aug = transforms.Compose([transforms.RandomPhotometricDistort(), transforms.GaussianBlur(3, [0.01, 1.0])])
         self.recalc_joint_hmaps = recalc_joint_hmaps
+
+    def convert_folds_to_sets(self):
+        fold_sets = []
+        for f in range(len(FOLDS)):
+            self.fold_sets.append({'test': FOLDS[f],
+                                   'val': FOLDS[f],
+                                   'train': list(itertools.chain.from_iterable([FOLDS[i]
+                                                                                for i in range(len(FOLDS)) if i != f]))
+                                   })
+        return fold_sets
 
     @staticmethod
     def check_swapping_based_on_bbox_size(img_labels_dets):
@@ -318,6 +341,27 @@ class YOUth10mSignature(Dataset):
         else:
             print(f"WARNING: {depthmaps_path} doesn't exist!")
             return np.zeros((1, self.resize[0], self.resize[1]), dtype=np.float32)
+
+    def get_label(self, idx):
+        label = json.loads(self.img_labels.loc[idx, "reg_ids"])
+        if self.segmentation:
+            label = list(set([tuple(elem) for elem in label]))
+            label = [[elem[0] for elem in label], [elem[1] for elem in label]]
+            label[0] = list(set(label[0]))
+            label[1] = list(set(label[1]))
+            onehot = [0] * 42
+            for l in label[0]:
+                onehot[l] = 1
+            for l in label[1]:
+                onehot[21+l] = 1
+            return onehot
+        else:
+            # 21 * 21 dimensional labels
+            label = list(set([tuple(elem) for elem in label]))
+            onehot = np.zeros((21, 21))
+            for pair in label:
+                onehot[pair] = 1
+            return np.reshape(onehot, (21*21))
 
     def __getitem__(self, idx):
         augment = self.augment if self._set == 'train' else ()

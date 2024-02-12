@@ -47,9 +47,9 @@ class ContactSignatureModel(nn.Module):
                     print(name)
                     param.requires_grad = False
 
-        for name, param in resnet50.named_parameters():
-            if 'bn' in name:
-                print(name)
+        # for name, param in resnet50.named_parameters():
+        #     if 'bn' in name:
+        #         print(name)
         # print(list(resnet50.named_parameters()))
         # print(resnet50)
         self.feat_extractor = resnet50
