@@ -36,7 +36,6 @@ class YOUth10mSignature(Dataset):
     def __init__(self, root_dir, camera='cam1', transform=None, target_transform=None, option=Options.jointmaps,
                  target_size=(224, 224), augment=(), recalc_joint_hmaps=False, bodyparts_dir=None, depthmaps_dir=None,
                  _set=None, train_frac=None, fold=0):
-        global FOLDS
         self.fold_sets = self.convert_folds_to_sets()
         set_subjects = self.fold_sets[fold][_set]
         self._set = _set
@@ -57,18 +56,25 @@ class YOUth10mSignature(Dataset):
             self.depthmaps_dir = os.path.join(root_dir, depthmaps_dir)
         os.makedirs(self.gauss_hmaps_dir, exist_ok=True)
         os.makedirs(self.joint_hmaps_dir, exist_ok=True)
-        img_labels = pd.read_csv("dataset/YOUth_contact_annotations.csv", index_col=0)
+        img_labels = pd.read_csv("dataset/YOUth_signature_annotations.csv", index_col=0)
         img_labels = img_labels[img_labels['subject'].str.contains('|'.join(set_subjects))]
         labels_dets_file = os.path.join(root_dir, "pose_detections.json")
         img_labels_dets = pd.read_json(labels_dets_file)
-        img_labels_dets = img_labels_dets[img_labels_dets['contact_type'] != 1].reset_index(drop=True)  # remove ambiguous class
         # filter only _set subjects:
         self.img_labels_dets = img_labels_dets[img_labels_dets['crop_path'].str.contains('|'.join(set_subjects))].reset_index(drop=True)
+
+        def split_subject_column(x):
+            return x.split('/')[-2]
+
+        def split_frame_column(x):
+            return x.split('/')[-1]
+        self.img_labels_dets['subject'] = self.img_labels_dets['crop_path'].apply(split_subject_column)
+        self.img_labels_dets['frame'] = self.img_labels_dets['crop_path'].apply(split_frame_column)
         self.need_swap = self.check_swapping_based_on_bbox_size(self.img_labels_dets)
         if train_frac is None or _set != 'train':
-            self.check_labels_dets_matching(img_labels, self.img_labels_dets)
+            self.img_labels_dets = self.merge_labels_dets(img_labels, self.img_labels_dets)
         else:
-            assert  0 < train_frac <= 1, "train_frac should be between (0, 1]"
+            assert 0 < train_frac <= 1, "train_frac should be between (0, 1]"
             print(f"Choosing {train_frac} of the training set ({len(self.img_labels_dets)})!")
             self.img_labels_dets = self.img_labels_dets.sample(frac=train_frac, random_state=42).reset_index(drop=True)
             self.need_swap = self.need_swap.sample(frac=train_frac, random_state=42).reset_index(drop=True)
@@ -84,14 +90,15 @@ class YOUth10mSignature(Dataset):
         self.color_aug = transforms.Compose([transforms.RandomPhotometricDistort(), transforms.GaussianBlur(3, [0.01, 1.0])])
         self.recalc_joint_hmaps = recalc_joint_hmaps
 
-    def convert_folds_to_sets(self):
+    @staticmethod
+    def convert_folds_to_sets():
         fold_sets = []
         for f in range(len(FOLDS)):
-            self.fold_sets.append({'test': FOLDS[f],
-                                   'val': FOLDS[f],
-                                   'train': list(itertools.chain.from_iterable([FOLDS[i]
-                                                                                for i in range(len(FOLDS)) if i != f]))
-                                   })
+            fold_sets.append({'test': FOLDS[f],
+                              'val': FOLDS[f],
+                              'train': list(itertools.chain.from_iterable([FOLDS[i]
+                                                                           for i in range(len(FOLDS)) if i != f]))
+                              })
         return fold_sets
 
     @staticmethod
@@ -116,24 +123,24 @@ class YOUth10mSignature(Dataset):
         return pd.DataFrame(swap)
 
     @staticmethod
-    def check_labels_dets_matching(img_labels, img_labels_dets):
+    def merge_labels_dets(img_labels, img_labels_dets):
         assert len(img_labels[img_labels.duplicated(subset=['subject', 'frame', 'contact_type'])]) == 0, \
             "DUPLICATES FOUND IN img_labels"
         missing_frames = defaultdict(list)
         for index, row in img_labels.iterrows():
-            crop_path = f"/home/sac/GithubRepos/ContactClassification-ssd/YOUth10mClassification/all/crops/cam1/{row['subject']}/{row['frame']}"
+            crop_path = f"/home/sac/GithubRepos/ContactClassification-ssd/YOUth10mSignatures/all/crops/cam1/{row['subject']}/{row['frame']}"
             if crop_path not in img_labels_dets['crop_path'].unique():
                 print(crop_path)
                 missing_frames[row['subject']].append(crop_path)
-        assert len(missing_frames) == 0, "There are missing frames in the pose_detections.csv!"
-        assert len(img_labels.drop_duplicates(subset=['subject', 'frame'])) == len(img_labels_dets)
+        assert len(missing_frames) == 0, "There are missing frames in the pose_detections.json!"
+        return pd.merge(img_labels, img_labels_dets.drop(columns='contact_type'), how='inner', on=['subject', 'frame'])
 
     def __len__(self):
         return len(self.img_labels_dets)
 
     def get_rgb(self, idx):
         crop_path = self.img_labels_dets.loc[idx, "crop_path"]
-        label = min(self.img_labels_dets.loc[idx, "contact_type"], 1)
+        label = self.get_label(idx)
         crop = Image.open(crop_path)
         # noinspection PyTypeChecker
         rgb = np.transpose(np.array(crop.resize(self.resize), dtype=np.float32) / 255, (2, 0, 1))
@@ -191,9 +198,9 @@ class YOUth10mSignature(Dataset):
         return x1, y1, x2, y2
 
     def get_joint_hmaps(self, idx, rgb=False):
+        label = self.get_label(idx)
         crop_path = self.img_labels_dets.loc[idx, "crop_path"]
         subject_frame_path = '_'.join(crop_path.split('/')[-2:])
-        label = min(self.img_labels_dets.loc[idx, "contact_type"], 1)
         joint_hmap_path = f'{os.path.join(self.joint_hmaps_dir, subject_frame_path)}.npy'
         if os.path.exists(joint_hmap_path):
             joint_hmaps = np.array(np.load(joint_hmap_path), dtype=np.float32)
@@ -343,13 +350,13 @@ class YOUth10mSignature(Dataset):
             return np.zeros((1, self.resize[0], self.resize[1]), dtype=np.float32)
 
     def get_label(self, idx):
-        label = json.loads(self.img_labels.loc[idx, "reg_ids"])
-        if self.segmentation:
+        label = json.loads(self.img_labels_dets.loc[idx, "contact_type"])
+        if True:  # segmentation
             label = list(set([tuple(elem) for elem in label]))
             label = [[elem[0] for elem in label], [elem[1] for elem in label]]
             label[0] = list(set(label[0]))
             label[1] = list(set(label[1]))
-            onehot = [0] * 42
+            onehot = torch.zeros(42)
             for l in label[0]:
                 onehot[l] = 1
             for l in label[1]:
@@ -373,16 +380,16 @@ class YOUth10mSignature(Dataset):
                 print("DEBUG: ON")
                 self.debug_printed = True
             data = np.zeros((52, self.resize[0], self.resize[1]), dtype=np.float32)
-            label = self.img_labels_dets.loc[idx, "contact_type"]
+            label = self.get_label(idx)
         elif self.option == Options.rgb:
             data, label = self.get_rgb(idx)
         elif self.option == Options.jointmaps:
             data, label = self.get_joint_hmaps(idx)
         elif self.option == Options.bodyparts:
-            label = min(self.img_labels_dets.loc[idx, "contact_type"], 1)
+            label = self.get_label(idx)
             data = self.get_bodyparts(idx)
         elif self.option == Options.depth:
-            label = min(self.img_labels_dets.loc[idx, "contact_type"], 1)
+            label = self.get_label(idx)
             data = self.get_depthmaps(idx)
         elif self.option == Options.jointmaps_rgb:
             data, label = self.get_joint_hmaps(idx, rgb=True)
@@ -508,7 +515,7 @@ def test_class():
 
 def test_get_joint_hmaps():
     option = Options.jointmaps
-    root_dir = '/home/sac/GithubRepos/ContactClassification-ssd/YOUth10mClassification/all'
+    root_dir = '/home/sac/GithubRepos/ContactClassification-ssd/YOUth10mSignatures/all'
     for _set in ['train', 'val', 'test']:
         dataset = YOUth10mSignature(root_dir, option=option, recalc_joint_hmaps=True, _set=_set)
         data_loader = torch.utils.data.DataLoader(dataset, batch_size=1)
@@ -521,5 +528,5 @@ def test_get_joint_hmaps():
 
 
 if __name__ == '__main__':
-    test_class()
-    # test_get_joint_hmaps()
+    # test_class()
+    test_get_joint_hmaps()

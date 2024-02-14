@@ -1,0 +1,121 @@
+/exp/Flickr/011_jointmaps_rgb_bodyparts_split_112_Aug-hflip-crop_segment_lr0.001_b16_20231106_133229_16
+/exp/Flickr/012_jointmaps_rgb_bodyparts_split_pretr_112_Aug-hflip-crop_segment_lr0.001_b16_20231106_125046_5
+/exp/Flickr/013_jointmaps_rgb_bodyparts_split_224_Aug-hflip-crop_segment_lr0.001_b16_20231106_141823_20
+/exp/Flickr/013_jointmaps_rgb_bodyparts_split_224_Aug-hflip-crop_segment_lr0.001_b16_20231108_125410_1
+/exp/Flickr/013_jointmaps_rgb_bodyparts_split_224_Aug-hflip-crop_segment_lr0.001_b16_20231108_125410_2
+/exp/Flickr/013_jointmaps_rgb_bodyparts_split_224_Aug-hflip-crop_segment_lr0.001_b16_20231108_125410_4
+/exp/Flickr/013_jointmaps_rgb_bodyparts_split_224_Aug-hflip-crop_segment_lr0.001_b16_20231108_125410_5
+/exp/Flickr/013_jointmaps_rgb_bodyparts_split_224_Aug-hflip-crop_segment_lr0.001_b16_20231108_125410_6
+/exp/Flickr/013_jointmaps_rgb_bodyparts_split_224_Aug-hflip-crop_segment_lr0.001_b16_20231108_125410_7
+/exp/Flickr/013_jointmaps_rgb_bodyparts_split_224_Aug-hflip-crop_segment_lr0.001_b16_20231108_125410_9
+/exp/Flickr/013_jointmaps_rgb_bodyparts_split_224_Aug-hflip-crop_segment_lr0.001_b16_20231108_125410_10
+/exp/Flickr/013_jointmaps_rgb_bodyparts_split_224_Aug-hflip-crop_segment_lr0.001_b16_20231108_125410_11
+/exp/Flickr/013_jointmaps_rgb_bodyparts_split_224_Aug-hflip-crop_segment_lr0.001_b16_20231108_125410_12
+/exp/Flickr/013_jointmaps_rgb_bodyparts_split_224_Aug-hflip-crop_segment_lr0.001_b16_20231108_125410_13
+/exp/Flickr/013_jointmaps_rgb_bodyparts_split_224_Aug-hflip-crop_segment_lr0.001_b16_20231108_125410_14
+/exp/Flickr/013_jointmaps_rgb_bodyparts_split_224_Aug-hflip-crop_segment_lr0.001_b16_20231108_125410_15
+/exp/Flickr/013_jointmaps_rgb_bodyparts_split_224_Aug-hflip-crop_segment_lr0.001_b16_20231108_125410_16
+/exp/Flickr/013_jointmaps_rgb_bodyparts_split_224_Aug-hflip-crop_segment_lr0.001_b16_20231108_125410_18
+/exp/Flickr/013_jointmaps_rgb_bodyparts_split_224_Aug-hflip-crop_segment_lr0.001_b16_20231108_125410_21
+/exp/Flickr/013_jointmaps_rgb_bodyparts_split_224_Aug-hflip-crop_segment_lr0.001_b16_20240212_155634_1
+/exp/YOUth/013_jointmaps_rgb_bodyparts_split_224_Aug-hflip-crop_segment_lr0.001_b16_20240214_144937_1
+/exp/Flickr/014_jointmaps_rgb_bodyparts_split_pretr_224_Aug-hflip-crop_segment_lr0.001_b16_20231106_114746_6
+/exp/Flickr/015_jointmaps_rgb_bodyparts_split_pretr_112_Aug-hflip-crop_segment_lr0.0015_b16_20231106_155423_5
+/exp/YOUth/013_jointmaps_rgb_bodyparts_split_224_Aug-hflip-crop_segment_lr0.001_b16_20240214_145121_1
+/exp/YOUth/013_jointmaps_rgb_bodyparts_split_224_Aug-hflip-crop_segment_lr0.001_b16_20240214_145121_3
+/exp/YOUth/013_jointmaps_rgb_bodyparts_split_224_Aug-hflip-crop_segment_lr0.001_b16_20240214_145121_4
+/.idea/DyadicSignatureDetection.iml
+/exp/Flickr/014_jointmaps_rgb_bodyparts_split_pretr_224_Aug-hflip-crop_segment_lr0.001_b16_20231106_114746/events.out.tfevents.1699267666.sac-desktop.54797.0
+/exp/Flickr/014_jointmaps_rgb_bodyparts_split_pretr_224_Aug-hflip-crop_segment_lr0.001_b16_20231106_114746/Training vs. Validation Loss_Training/events.out.tfevents.1699267802.sac-desktop.54797.1
+/exp/Flickr/014_jointmaps_rgb_bodyparts_split_pretr_224_Aug-hflip-crop_segment_lr0.001_b16_20231106_114746/Training vs. Validation Loss_Validation/events.out.tfevents.1699267802.sac-desktop.54797.2
+/exp/Flickr/014_jointmaps_rgb_bodyparts_split_pretr_224_Aug-hflip-crop_segment_lr0.001_b16_20231106_114746/Training vs. Validation Accuracy_Training/events.out.tfevents.1699267802.sac-desktop.54797.3
+/exp/Flickr/014_jointmaps_rgb_bodyparts_split_pretr_224_Aug-hflip-crop_segment_lr0.001_b16_20231106_114746/Training vs. Validation Accuracy_Validation/events.out.tfevents.1699267802.sac-desktop.54797.4
+/exp/Flickr/014_jointmaps_rgb_bodyparts_split_pretr_224_Aug-hflip-crop_segment_lr0.001_b16_20231106_114746/Training vs. Validation F1 Score_Training/events.out.tfevents.1699267802.sac-desktop.54797.5
+/exp/Flickr/014_jointmaps_rgb_bodyparts_split_pretr_224_Aug-hflip-crop_segment_lr0.001_b16_20231106_114746/Training vs. Validation F1 Score_Validation/events.out.tfevents.1699267802.sac-desktop.54797.6
+/exp/Flickr/014_jointmaps_rgb_bodyparts_split_pretr_224_Aug-hflip-crop_segment_lr0.001_b16_20231106_114746/Training vs. Validation Jaccard_Training/events.out.tfevents.1699267802.sac-desktop.54797.7
+/exp/Flickr/014_jointmaps_rgb_bodyparts_split_pretr_224_Aug-hflip-crop_segment_lr0.001_b16_20231106_114746/Training vs. Validation Jaccard_Validation/events.out.tfevents.1699267802.sac-desktop.54797.8
+/exp/Flickr/012_jointmaps_rgb_bodyparts_split_pretr_112_Aug-hflip-crop_segment_lr0.001_b16_20231106_125046/events.out.tfevents.1699271446.sac-desktop.64094.0
+/exp/Flickr/012_jointmaps_rgb_bodyparts_split_pretr_112_Aug-hflip-crop_segment_lr0.001_b16_20231106_125046/Training vs. Validation Loss_Training/events.out.tfevents.1699271512.sac-desktop.64094.1
+/exp/Flickr/012_jointmaps_rgb_bodyparts_split_pretr_112_Aug-hflip-crop_segment_lr0.001_b16_20231106_125046/Training vs. Validation Loss_Validation/events.out.tfevents.1699271512.sac-desktop.64094.2
+/exp/Flickr/012_jointmaps_rgb_bodyparts_split_pretr_112_Aug-hflip-crop_segment_lr0.001_b16_20231106_125046/Training vs. Validation Accuracy_Training/events.out.tfevents.1699271512.sac-desktop.64094.3
+/exp/Flickr/012_jointmaps_rgb_bodyparts_split_pretr_112_Aug-hflip-crop_segment_lr0.001_b16_20231106_125046/Training vs. Validation Accuracy_Validation/events.out.tfevents.1699271512.sac-desktop.64094.4
+/exp/Flickr/012_jointmaps_rgb_bodyparts_split_pretr_112_Aug-hflip-crop_segment_lr0.001_b16_20231106_125046/Training vs. Validation F1 Score_Training/events.out.tfevents.1699271512.sac-desktop.64094.5
+/exp/Flickr/012_jointmaps_rgb_bodyparts_split_pretr_112_Aug-hflip-crop_segment_lr0.001_b16_20231106_125046/Training vs. Validation F1 Score_Validation/events.out.tfevents.1699271512.sac-desktop.64094.6
+/exp/Flickr/012_jointmaps_rgb_bodyparts_split_pretr_112_Aug-hflip-crop_segment_lr0.001_b16_20231106_125046/Training vs. Validation Jaccard_Training/events.out.tfevents.1699271512.sac-desktop.64094.7
+/exp/Flickr/012_jointmaps_rgb_bodyparts_split_pretr_112_Aug-hflip-crop_segment_lr0.001_b16_20231106_125046/Training vs. Validation Jaccard_Validation/events.out.tfevents.1699271512.sac-desktop.64094.8
+/exp/Flickr/011_jointmaps_rgb_bodyparts_split_112_Aug-hflip-crop_segment_lr0.001_b16_20231106_133229/events.out.tfevents.1699273949.sac-desktop.78042.0
+/exp/Flickr/011_jointmaps_rgb_bodyparts_split_112_Aug-hflip-crop_segment_lr0.001_b16_20231106_133229/Training vs. Validation Loss_Training/events.out.tfevents.1699274016.sac-desktop.78042.1
+/exp/Flickr/011_jointmaps_rgb_bodyparts_split_112_Aug-hflip-crop_segment_lr0.001_b16_20231106_133229/Training vs. Validation Loss_Validation/events.out.tfevents.1699274016.sac-desktop.78042.2
+/exp/Flickr/011_jointmaps_rgb_bodyparts_split_112_Aug-hflip-crop_segment_lr0.001_b16_20231106_133229/Training vs. Validation Accuracy_Training/events.out.tfevents.1699274016.sac-desktop.78042.3
+/exp/Flickr/011_jointmaps_rgb_bodyparts_split_112_Aug-hflip-crop_segment_lr0.001_b16_20231106_133229/Training vs. Validation Accuracy_Validation/events.out.tfevents.1699274016.sac-desktop.78042.4
+/exp/Flickr/011_jointmaps_rgb_bodyparts_split_112_Aug-hflip-crop_segment_lr0.001_b16_20231106_133229/Training vs. Validation F1 Score_Training/events.out.tfevents.1699274016.sac-desktop.78042.5
+/exp/Flickr/011_jointmaps_rgb_bodyparts_split_112_Aug-hflip-crop_segment_lr0.001_b16_20231106_133229/Training vs. Validation F1 Score_Validation/events.out.tfevents.1699274016.sac-desktop.78042.6
+/exp/Flickr/011_jointmaps_rgb_bodyparts_split_112_Aug-hflip-crop_segment_lr0.001_b16_20231106_133229/Training vs. Validation Jaccard_Training/events.out.tfevents.1699274016.sac-desktop.78042.7
+/exp/Flickr/011_jointmaps_rgb_bodyparts_split_112_Aug-hflip-crop_segment_lr0.001_b16_20231106_133229/Training vs. Validation Jaccard_Validation/events.out.tfevents.1699274016.sac-desktop.78042.8
+/exp/Flickr/013_jointmaps_rgb_bodyparts_split_224_Aug-hflip-crop_segment_lr0.001_b16_20231106_141823/events.out.tfevents.1699276703.sac-desktop.91544.0
+/exp/Flickr/013_jointmaps_rgb_bodyparts_split_224_Aug-hflip-crop_segment_lr0.001_b16_20231106_141823/Training vs. Validation Loss_Training/events.out.tfevents.1699276850.sac-desktop.91544.1
+/exp/Flickr/013_jointmaps_rgb_bodyparts_split_224_Aug-hflip-crop_segment_lr0.001_b16_20231106_141823/Training vs. Validation Loss_Validation/events.out.tfevents.1699276850.sac-desktop.91544.2
+/exp/Flickr/013_jointmaps_rgb_bodyparts_split_224_Aug-hflip-crop_segment_lr0.001_b16_20231106_141823/Training vs. Validation Accuracy_Training/events.out.tfevents.1699276850.sac-desktop.91544.3
+/exp/Flickr/013_jointmaps_rgb_bodyparts_split_224_Aug-hflip-crop_segment_lr0.001_b16_20231106_141823/Training vs. Validation Accuracy_Validation/events.out.tfevents.1699276850.sac-desktop.91544.4
+/exp/Flickr/013_jointmaps_rgb_bodyparts_split_224_Aug-hflip-crop_segment_lr0.001_b16_20231106_141823/Training vs. Validation F1 Score_Training/events.out.tfevents.1699276850.sac-desktop.91544.5
+/exp/Flickr/013_jointmaps_rgb_bodyparts_split_224_Aug-hflip-crop_segment_lr0.001_b16_20231106_141823/Training vs. Validation F1 Score_Validation/events.out.tfevents.1699276850.sac-desktop.91544.6
+/exp/Flickr/013_jointmaps_rgb_bodyparts_split_224_Aug-hflip-crop_segment_lr0.001_b16_20231106_141823/Training vs. Validation Jaccard_Training/events.out.tfevents.1699276850.sac-desktop.91544.7
+/exp/Flickr/013_jointmaps_rgb_bodyparts_split_224_Aug-hflip-crop_segment_lr0.001_b16_20231106_141823/Training vs. Validation Jaccard_Validation/events.out.tfevents.1699276850.sac-desktop.91544.8
+/exp/Flickr/015_jointmaps_rgb_bodyparts_split_pretr_112_Aug-hflip-crop_segment_lr0.0015_b16_20231106_155423/events.out.tfevents.1699282463.sac-desktop.106977.0
+/exp/Flickr/015_jointmaps_rgb_bodyparts_split_pretr_112_Aug-hflip-crop_segment_lr0.0015_b16_20231106_155423/Training vs. Validation Loss_Training/events.out.tfevents.1699282529.sac-desktop.106977.1
+/exp/Flickr/015_jointmaps_rgb_bodyparts_split_pretr_112_Aug-hflip-crop_segment_lr0.0015_b16_20231106_155423/Training vs. Validation Loss_Validation/events.out.tfevents.1699282529.sac-desktop.106977.2
+/exp/Flickr/015_jointmaps_rgb_bodyparts_split_pretr_112_Aug-hflip-crop_segment_lr0.0015_b16_20231106_155423/Training vs. Validation Accuracy_Training/events.out.tfevents.1699282529.sac-desktop.106977.3
+/exp/Flickr/015_jointmaps_rgb_bodyparts_split_pretr_112_Aug-hflip-crop_segment_lr0.0015_b16_20231106_155423/Training vs. Validation Accuracy_Validation/events.out.tfevents.1699282529.sac-desktop.106977.4
+/exp/Flickr/015_jointmaps_rgb_bodyparts_split_pretr_112_Aug-hflip-crop_segment_lr0.0015_b16_20231106_155423/Training vs. Validation F1 Score_Training/events.out.tfevents.1699282529.sac-desktop.106977.5
+/exp/Flickr/015_jointmaps_rgb_bodyparts_split_pretr_112_Aug-hflip-crop_segment_lr0.0015_b16_20231106_155423/Training vs. Validation F1 Score_Validation/events.out.tfevents.1699282529.sac-desktop.106977.6
+/exp/Flickr/015_jointmaps_rgb_bodyparts_split_pretr_112_Aug-hflip-crop_segment_lr0.0015_b16_20231106_155423/Training vs. Validation Jaccard_Training/events.out.tfevents.1699282529.sac-desktop.106977.7
+/exp/Flickr/015_jointmaps_rgb_bodyparts_split_pretr_112_Aug-hflip-crop_segment_lr0.0015_b16_20231106_155423/Training vs. Validation Jaccard_Validation/events.out.tfevents.1699282529.sac-desktop.106977.8
+/exp/Flickr/013_jointmaps_rgb_bodyparts_split_224_Aug-hflip-crop_segment_lr0.001_b16_20231108_125410/events.out.tfevents.1699444450.sac-desktop.253490.0
+/exp/Flickr/013_jointmaps_rgb_bodyparts_split_224_Aug-hflip-crop_segment_lr0.001_b16_20231108_125410/Training vs. Validation Loss_Training/events.out.tfevents.1699444608.sac-desktop.253490.1
+/exp/Flickr/013_jointmaps_rgb_bodyparts_split_224_Aug-hflip-crop_segment_lr0.001_b16_20231108_125410/Training vs. Validation Loss_Validation/events.out.tfevents.1699444608.sac-desktop.253490.2
+/exp/Flickr/013_jointmaps_rgb_bodyparts_split_224_Aug-hflip-crop_segment_lr0.001_b16_20231108_125410/Training vs. Validation Accuracy_Training/events.out.tfevents.1699444608.sac-desktop.253490.3
+/exp/Flickr/013_jointmaps_rgb_bodyparts_split_224_Aug-hflip-crop_segment_lr0.001_b16_20231108_125410/Training vs. Validation Accuracy_Validation/events.out.tfevents.1699444608.sac-desktop.253490.4
+/exp/Flickr/013_jointmaps_rgb_bodyparts_split_224_Aug-hflip-crop_segment_lr0.001_b16_20231108_125410/Training vs. Validation F1 Score_Training/events.out.tfevents.1699444608.sac-desktop.253490.5
+/exp/Flickr/013_jointmaps_rgb_bodyparts_split_224_Aug-hflip-crop_segment_lr0.001_b16_20231108_125410/Training vs. Validation F1 Score_Validation/events.out.tfevents.1699444608.sac-desktop.253490.6
+/exp/Flickr/013_jointmaps_rgb_bodyparts_split_224_Aug-hflip-crop_segment_lr0.001_b16_20231108_125410/Training vs. Validation Jaccard_Training/events.out.tfevents.1699444608.sac-desktop.253490.7
+/exp/Flickr/013_jointmaps_rgb_bodyparts_split_224_Aug-hflip-crop_segment_lr0.001_b16_20231108_125410/Training vs. Validation Jaccard_Validation/events.out.tfevents.1699444608.sac-desktop.253490.8
+/exp/Flickr/013_jointmaps_rgb_bodyparts_split_224_Aug-hflip-crop_segment_lr0.001_b16_20240212_155634/events.out.tfevents.1707749794.sac-desktop.1245863.0
+/exp/Flickr/013_jointmaps_rgb_bodyparts_split_224_Aug-hflip-crop_segment_lr0.001_b16_20240212_155634/Training vs. Validation Loss_Training/events.out.tfevents.1707749949.sac-desktop.1245863.1
+/exp/Flickr/013_jointmaps_rgb_bodyparts_split_224_Aug-hflip-crop_segment_lr0.001_b16_20240212_155634/Training vs. Validation Loss_Validation/events.out.tfevents.1707749949.sac-desktop.1245863.2
+/exp/Flickr/013_jointmaps_rgb_bodyparts_split_224_Aug-hflip-crop_segment_lr0.001_b16_20240212_155634/Training vs. Validation Accuracy_Training/events.out.tfevents.1707749949.sac-desktop.1245863.3
+/exp/Flickr/013_jointmaps_rgb_bodyparts_split_224_Aug-hflip-crop_segment_lr0.001_b16_20240212_155634/Training vs. Validation Accuracy_Validation/events.out.tfevents.1707749949.sac-desktop.1245863.4
+/exp/Flickr/013_jointmaps_rgb_bodyparts_split_224_Aug-hflip-crop_segment_lr0.001_b16_20240212_155634/Training vs. Validation F1 Score_Training/events.out.tfevents.1707749949.sac-desktop.1245863.5
+/exp/Flickr/013_jointmaps_rgb_bodyparts_split_224_Aug-hflip-crop_segment_lr0.001_b16_20240212_155634/Training vs. Validation F1 Score_Validation/events.out.tfevents.1707749949.sac-desktop.1245863.6
+/exp/Flickr/013_jointmaps_rgb_bodyparts_split_224_Aug-hflip-crop_segment_lr0.001_b16_20240212_155634/Training vs. Validation Jaccard_Training/events.out.tfevents.1707749949.sac-desktop.1245863.7
+/exp/Flickr/013_jointmaps_rgb_bodyparts_split_224_Aug-hflip-crop_segment_lr0.001_b16_20240212_155634/Training vs. Validation Jaccard_Validation/events.out.tfevents.1707749949.sac-desktop.1245863.8
+/exp/YOUth/013_jointmaps_rgb_bodyparts_split_224_Aug-hflip-crop_segment_lr0.001_b16_20240214_141203/events.out.tfevents.1707916323.sac-desktop.1292612.0
+/exp/YOUth/013_jointmaps_rgb_bodyparts_split_224_Aug-hflip-crop_segment_lr0.001_b16_20240214_141456/events.out.tfevents.1707916496.sac-desktop.1293132.0
+/exp/YOUth/013_jointmaps_rgb_bodyparts_split_224_Aug-hflip-crop_segment_lr0.001_b16_20240214_141622/events.out.tfevents.1707916582.sac-desktop.1293530.0
+/exp/YOUth/013_jointmaps_rgb_bodyparts_split_224_Aug-hflip-crop_segment_lr0.001_b16_20240214_141634/events.out.tfevents.1707916594.sac-desktop.1293906.0
+/exp/YOUth/013_jointmaps_rgb_bodyparts_split_224_Aug-hflip-crop_segment_lr0.001_b16_20240214_144237/events.out.tfevents.1707918157.sac-desktop.1295651.0
+/exp/YOUth/013_jointmaps_rgb_bodyparts_split_224_Aug-hflip-crop_segment_lr0.001_b16_20240214_144357/events.out.tfevents.1707918237.sac-desktop.1296115.0
+/exp/YOUth/013_jointmaps_rgb_bodyparts_split_224_Aug-hflip-crop_segment_lr0.001_b16_20240214_144555/events.out.tfevents.1707918355.sac-desktop.1296605.0
+/exp/YOUth/013_jointmaps_rgb_bodyparts_split_224_Aug-hflip-crop_segment_lr0.001_b16_20240214_144937/events.out.tfevents.1707918577.sac-desktop.1297553.0
+/exp/YOUth/013_jointmaps_rgb_bodyparts_split_224_Aug-hflip-crop_segment_lr0.001_b16_20240214_144937/Training vs. Validation Loss_Training/events.out.tfevents.1707918624.sac-desktop.1297553.1
+/exp/YOUth/013_jointmaps_rgb_bodyparts_split_224_Aug-hflip-crop_segment_lr0.001_b16_20240214_144937/Training vs. Validation Loss_Validation/events.out.tfevents.1707918624.sac-desktop.1297553.2
+/exp/YOUth/013_jointmaps_rgb_bodyparts_split_224_Aug-hflip-crop_segment_lr0.001_b16_20240214_144937/Training vs. Validation Accuracy_Training/events.out.tfevents.1707918624.sac-desktop.1297553.3
+/exp/YOUth/013_jointmaps_rgb_bodyparts_split_224_Aug-hflip-crop_segment_lr0.001_b16_20240214_144937/Training vs. Validation Accuracy_Validation/events.out.tfevents.1707918624.sac-desktop.1297553.4
+/exp/YOUth/013_jointmaps_rgb_bodyparts_split_224_Aug-hflip-crop_segment_lr0.001_b16_20240214_144937/Training vs. Validation F1 Score_Training/events.out.tfevents.1707918624.sac-desktop.1297553.5
+/exp/YOUth/013_jointmaps_rgb_bodyparts_split_224_Aug-hflip-crop_segment_lr0.001_b16_20240214_144937/Training vs. Validation F1 Score_Validation/events.out.tfevents.1707918624.sac-desktop.1297553.6
+/exp/YOUth/013_jointmaps_rgb_bodyparts_split_224_Aug-hflip-crop_segment_lr0.001_b16_20240214_144937/Training vs. Validation Jaccard_Training/events.out.tfevents.1707918624.sac-desktop.1297553.7
+/exp/YOUth/013_jointmaps_rgb_bodyparts_split_224_Aug-hflip-crop_segment_lr0.001_b16_20240214_144937/Training vs. Validation Jaccard_Validation/events.out.tfevents.1707918624.sac-desktop.1297553.8
+/exp/YOUth/013_jointmaps_rgb_bodyparts_split_224_Aug-hflip-crop_segment_lr0.001_b16_20240214_145121/events.out.tfevents.1707918681.sac-desktop.1298806.0
+/exp/YOUth/013_jointmaps_rgb_bodyparts_split_224_Aug-hflip-crop_segment_lr0.001_b16_20240214_145121/Training vs. Validation Loss_Training/events.out.tfevents.1707918723.sac-desktop.1298806.1
+/exp/YOUth/013_jointmaps_rgb_bodyparts_split_224_Aug-hflip-crop_segment_lr0.001_b16_20240214_145121/Training vs. Validation Loss_Validation/events.out.tfevents.1707918723.sac-desktop.1298806.2
+/exp/YOUth/013_jointmaps_rgb_bodyparts_split_224_Aug-hflip-crop_segment_lr0.001_b16_20240214_145121/Training vs. Validation Accuracy_Training/events.out.tfevents.1707918723.sac-desktop.1298806.3
+/exp/YOUth/013_jointmaps_rgb_bodyparts_split_224_Aug-hflip-crop_segment_lr0.001_b16_20240214_145121/Training vs. Validation Accuracy_Validation/events.out.tfevents.1707918723.sac-desktop.1298806.4
+/exp/YOUth/013_jointmaps_rgb_bodyparts_split_224_Aug-hflip-crop_segment_lr0.001_b16_20240214_145121/Training vs. Validation F1 Score_Training/events.out.tfevents.1707918723.sac-desktop.1298806.5
+/exp/YOUth/013_jointmaps_rgb_bodyparts_split_224_Aug-hflip-crop_segment_lr0.001_b16_20240214_145121/Training vs. Validation F1 Score_Validation/events.out.tfevents.1707918723.sac-desktop.1298806.6
+/exp/YOUth/013_jointmaps_rgb_bodyparts_split_224_Aug-hflip-crop_segment_lr0.001_b16_20240214_145121/Training vs. Validation Jaccard_Training/events.out.tfevents.1707918723.sac-desktop.1298806.7
+/exp/YOUth/013_jointmaps_rgb_bodyparts_split_224_Aug-hflip-crop_segment_lr0.001_b16_20240214_145121/Training vs. Validation Jaccard_Validation/events.out.tfevents.1707918723.sac-desktop.1298806.8
+/.idea/misc.xml
+/.idea/modules.xml
+/.idea/inspectionProfiles/profiles_settings.xml
+/.idea/inspectionProfiles/Project_Default.xml
+/test_results.txt
+/.idea/vcs.xml
