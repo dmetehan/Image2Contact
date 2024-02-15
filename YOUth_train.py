@@ -47,8 +47,8 @@ def train_one_epoch(model, optimizer, loss_fn, train_loader, epoch_index, tb_wri
     # iter(training_loader) so that we can track the batch
     # index and do some intra-epoch reporting
     i = 0
-    all_preds = {key: np.zeros((len(train_loader), eval(key), batch_size)) for key in ['42', '21*21']}
-    all_labels = {key: np.zeros((len(train_loader), eval(key), batch_size)) for key in ['42', '21*21']}
+    all_preds = {key: np.zeros((len(train_loader), eval(key), batch_size)) for key in model.output_keys}
+    all_labels = {key: np.zeros((len(train_loader), eval(key), batch_size)) for key in model.output_keys}
     for i, data in enumerate(train_loader):
         # Every data instance is an input + label pair
         _, inputs, labels = data
@@ -60,15 +60,15 @@ def train_one_epoch(model, optimizer, loss_fn, train_loader, epoch_index, tb_wri
         optimizer.zero_grad()
 
         # Make predictions for this batch
-        outputs_dict = model(inputs)
+        outputs_list = model(inputs)
         loss = torch.zeros(1)
-        for key in outputs_dict:
-            preds = outputs_dict[key].T.detach().cpu()
+        for k, key in enumerate(labels):
+            preds = outputs_list[k].T.detach().cpu()
             preds[preds >= 0.5] = 1
             preds[preds < 0.5] = 0
             all_preds[key][i, :, :len(labels[key])] = preds
             # Compute the loss and its gradients
-            loss += loss_fn(outputs_dict[key], labels[key].float())
+            loss += loss_fn(outputs_list[k], labels[key].float())
         loss.backward()
 
         # Adjust learning weights
@@ -134,8 +134,8 @@ def train_model(model, optimizer, scheduler, loss_fn_train, experiment_name, cfg
 
         running_vloss = 0.0
         i = 0
-        all_preds = {key: np.zeros((len(val_loader), eval(key), cfg.BATCH_SIZE)) for key in ['42', '21*21']}
-        all_labels = {key: np.zeros((len(val_loader), eval(key), cfg.BATCH_SIZE)) for key in ['42', '21*21']}
+        all_preds = {key: np.zeros((len(val_loader), eval(key), cfg.BATCH_SIZE)) for key in model.output_keys}
+        all_labels = {key: np.zeros((len(val_loader), eval(key), cfg.BATCH_SIZE)) for key in model.output_keys}
         with torch.no_grad():
             for i, vdata in enumerate(val_loader):
                 _, vinputs, vlabels = vdata
@@ -145,13 +145,13 @@ def train_model(model, optimizer, scheduler, loss_fn_train, experiment_name, cfg
                 vinputs = vinputs.to(device)
 
                 vloss = torch.zeros(1)
-                voutputs_dict = model(vinputs)
-                for key in voutputs_dict:
-                    vpreds = voutputs_dict[key].T.detach().cpu()
+                voutputs_list = model(vinputs)
+                for k, key in enumerate(vlabels):
+                    vpreds = voutputs_list[k].T.detach().cpu()
                     vpreds[vpreds >= 0.5] = 1
                     vpreds[vpreds < 0.5] = 0
                     all_preds[key][i, :, :len(vlabels[key])] = vpreds
-                    vloss += loss_fn_valid(voutputs_dict[key], vlabels[key].float())
+                    vloss += loss_fn_valid(voutputs_list[k], vlabels[key].float())
                 running_vloss += vloss.detach()
 
         vjaccard = {}
