@@ -54,15 +54,21 @@ class ContactSignatureModel(nn.Module):
         # print(resnet50)
         self.feat_extractor = resnet50
         self.output_keys = ['42', '12', '21*21', '6*6']
-        self.fc = [nn.Linear(in_features=2048, out_features=eval(key), bias=True) for key in self.output_keys]
+        self.fc42 = nn.Linear(in_features=2048, out_features=42, bias=True)
+        self.fc12 = nn.Linear(in_features=2048, out_features=12, bias=True)
+        self.fc21x21 = nn.Linear(in_features=2048, out_features=21*21, bias=True)
+        self.fc6x6 = nn.Linear(in_features=2048, out_features=6*6, bias=True)
 
     def forward(self, x):
         x = self.conv1(x)
         x = self.feat_extractor(x)
         x = torch.flatten(x, 1)
-        x_list = [self.fc[k](x) for k in range(len(self.output_keys))]
+        x42 = self.fc42(x)
+        x12 = self.fc12(x)
+        x21x21 = self.fc21x21(x)
+        x6x6 = self.fc6x6(x)
 
-        return x_list
+        return x42, x12, x21x21, x6x6
 
 
 def initialize_model(cfg, device, finetune=False):

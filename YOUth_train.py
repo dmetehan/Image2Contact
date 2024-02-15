@@ -60,8 +60,8 @@ def train_one_epoch(model, optimizer, loss_fn, train_loader, epoch_index, tb_wri
         optimizer.zero_grad()
 
         # Make predictions for this batch
-        outputs_list = model.to(device)(inputs.to(device))
-        loss = torch.zeros(1)
+        outputs_list = model(inputs)
+        loss = torch.zeros(1).to(device)
         for k, key in enumerate(labels):
             preds = outputs_list[k].T.detach().cpu()
             preds[preds >= 0.5] = 1
@@ -144,7 +144,7 @@ def train_model(model, optimizer, scheduler, loss_fn_train, experiment_name, cfg
                     vlabels[key] = vlabels[key].to(device)
                 vinputs = vinputs.to(device)
 
-                vloss = torch.zeros(1)
+                vloss = torch.zeros(1).to(device)
                 voutputs_list = model(vinputs)
                 for k, key in enumerate(vlabels):
                     vpreds = voutputs_list[k].T.detach().cpu()
@@ -152,23 +152,26 @@ def train_model(model, optimizer, scheduler, loss_fn_train, experiment_name, cfg
                     vpreds[vpreds < 0.5] = 0
                     all_preds[key][i, :, :len(vlabels[key])] = vpreds
                     vloss += loss_fn_valid(voutputs_list[k], vlabels[key].float())
-                running_vloss += vloss.detach()
+                running_vloss += vloss.detach().item()
 
         vjaccard = {}
         for key in all_labels:
             all_preds[key] = np.swapaxes(all_preds[key], 1, 2).reshape(-1, eval(key))[:-(cfg.BATCH_SIZE - len(vlabels[key])), :]
             all_labels[key] = np.swapaxes(all_labels[key], 1, 2).reshape(-1, eval(key))[:-(cfg.BATCH_SIZE - len(vlabels[key])), :]
-            jaccard[key] = jaccard_score(all_labels[key], all_preds[key], average='macro')
+            vjaccard[key] = jaccard_score(all_labels[key], all_preds[key], average='macro')
         avg_vloss = running_vloss / (i + 1)
         scheduler.step(avg_vloss)
-        print('LOSS train {:.4f} valid {:.4f} - Jaccard train {:.4f} valid {:.4f}'.format(avg_loss, avg_vloss, jaccard, vjaccard))
-
+        print('LOSS train {:.4f} valid {:.4f} - Jaccard train {} valid {}'.format(avg_loss,
+                                                                          avg_vloss,
+                                                                          ','.join([f'{key}: {jaccard[key]}' for key in model.output_keys]),
+                                                                          ','.join([f'{key}: {vjaccard[key]}' for key in model.output_keys])))
         writer.add_scalars('Training vs. Validation Loss',
                            {'Training': avg_loss, 'Validation': avg_vloss},
                            epoch + 1)
-        writer.add_scalars('Training vs. Validation Jaccard',
-                           {'Training': jaccard, 'Validation': vjaccard},
-                           epoch + 1)
+        for key in model.output_keys:
+            writer.add_scalars('Training vs. Validation Jaccard',
+                               {'Training'+key: jaccard[key], 'Validation'+key: vjaccard[key]},
+                               epoch + 1)
         writer.flush()
 
         # Track the best performance, and save the model's state
