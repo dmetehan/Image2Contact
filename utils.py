@@ -73,7 +73,7 @@ def get_experiment_name(cfg, signatures=False):
                       f'{"_pretr" if cfg.PRETRAINED else ""}{"Copy" if cfg.PRETRAINED and cfg.COPY_RGB_WEIGHTS else ""}' \
                       f'_{cfg.TARGET_SIZE[0]}' \
                       f'{"_Aug-" if len(cfg.AUGMENTATIONS) > 0 else ""}{"-".join(cfg.AUGMENTATIONS)}' \
-                      f'{"_segment" if cfg.SEGMENTATION else ""}' \
+                      f'{"_multitask" if cfg.MULTITASK else ""}' \
                       f'_lr{cfg.LR}' \
                       f'_b{cfg.BATCH_SIZE}'
     print("Experiment name:")
