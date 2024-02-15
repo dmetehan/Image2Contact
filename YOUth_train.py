@@ -162,9 +162,9 @@ def train_model(model, optimizer, scheduler, loss_fn_train, experiment_name, cfg
         avg_vloss = running_vloss / (i + 1)
         scheduler.step(avg_vloss)
         print('LOSS train {:.4f} valid {:.4f} - Jaccard train {} valid {}'.format(avg_loss,
-                                                                          avg_vloss,
-                                                                          ','.join([f'{key}: {jaccard[key]}' for key in model.output_keys]),
-                                                                          ','.join([f'{key}: {vjaccard[key]}' for key in model.output_keys])))
+                                                                                  avg_vloss,
+                                                                                  ','.join([f'{key}: {jaccard[key].item():.4f}' for key in model.output_keys]),
+                                                                                  ','.join([f'{key}: {vjaccard[key].item():.4f}' for key in model.output_keys])))
         writer.add_scalars('Training vs. Validation Loss',
                            {'Training': avg_loss, 'Validation': avg_vloss},
                            epoch + 1)

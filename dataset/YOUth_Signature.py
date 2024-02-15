@@ -89,6 +89,7 @@ class YOUth10mSignature(Dataset):
         self.debug_printed = False
         self.color_aug = transforms.Compose([transforms.RandomPhotometricDistort(), transforms.GaussianBlur(3, [0.01, 1.0])])
         self.recalc_joint_hmaps = recalc_joint_hmaps
+        self.reg_mapper = self.comb_regs('dataset/combined_regions_6.txt')
 
     @staticmethod
     def convert_folds_to_sets():
@@ -361,13 +362,30 @@ class YOUth10mSignature(Dataset):
             onehot['42'][l] = 1
         for l in label_seg[1]:
             onehot['42'][21 + l] = 1
+        # 12 segmentation labels
+        for l in label_seg[0]:
+            onehot['12'][self.reg_mapper(l)] = 1
+        for l in label_seg[1]:
+            onehot['12'][6 + self.reg_mapper(l)] = 1
         # 21 * 21 dimensional labels
         for pair in label:
             onehot['21*21'][pair] = 1
+        # 6 * 6 dimensional labels
+        for pair in label:
+            onehot['6*6'][(self.reg_mapper(pair[0]), self.reg_mapper(pair[1]))] = 1
         # TODO: Implement 12 and 6x6 labels
         onehot['21*21'] = onehot['21*21'].reshape(21*21)
         onehot['6*6'] = onehot['6*6'].reshape(6*6)
         return onehot
+
+    @staticmethod
+    def comb_regs(path):
+        mapping = {}
+        with open(path, 'r') as f:
+            for i, line in enumerate(f):
+                for reg in list(map(int, map(str.strip, line.strip().split(',')))):
+                    mapping[reg] = i
+        return lambda x: mapping[x]
 
     def __getitem__(self, idx):
         augment = self.augment if self._set == 'train' else ()
