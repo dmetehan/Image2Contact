@@ -60,7 +60,7 @@ def train_one_epoch(model, optimizer, loss_fn, train_loader, epoch_index, tb_wri
         optimizer.zero_grad()
 
         # Make predictions for this batch
-        outputs_list = model(inputs)
+        outputs_list = model.to(device)(inputs.to(device))
         loss = torch.zeros(1)
         for k, key in enumerate(labels):
             preds = outputs_list[k].T.detach().cpu()

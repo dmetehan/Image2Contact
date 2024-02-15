@@ -60,9 +60,9 @@ class ContactSignatureModel(nn.Module):
         x = self.conv1(x)
         x = self.feat_extractor(x)
         x = torch.flatten(x, 1)
-        x_dict = [self.fc[k](x) for k in range(len(self.output_keys))]
+        x_list = [self.fc[k](x) for k in range(len(self.output_keys))]
 
-        return x_dict
+        return x_list
 
 
 def initialize_model(cfg, device, finetune=False):
