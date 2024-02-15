@@ -365,8 +365,8 @@ class YOUth10mSignature(Dataset):
         for pair in label:
             onehot['21*21'][pair] = 1
         # TODO: Implement 12 and 6x6 labels
-        onehot['21*21'] = onehot['21*21'].reshape(-1, 21*21)
-        onehot['6*6'] = onehot['6*6'].reshape(-1, 6*6)
+        onehot['21*21'] = onehot['21*21'].reshape(21*21)
+        onehot['6*6'] = onehot['6*6'].reshape(6*6)
         return onehot
 
     def __getitem__(self, idx):
