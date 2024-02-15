@@ -38,7 +38,7 @@ class EarlyStopping:
                 self.early_stop = True
 
 
-def train_one_epoch(model, optimizer, loss_fn, train_loader, epoch_index, tb_writer, batch_size, segmentation=False):
+def train_one_epoch(model, optimizer, loss_fn, train_loader, epoch_index, tb_writer, batch_size, multitask=True):
     overall_loss = 0.
     running_loss = 0.
     last_loss = 0.
@@ -47,25 +47,28 @@ def train_one_epoch(model, optimizer, loss_fn, train_loader, epoch_index, tb_wri
     # iter(training_loader) so that we can track the batch
     # index and do some intra-epoch reporting
     i = 0
-    all_preds, all_labels = (np.zeros((len(train_loader), (21+21) if segmentation else (21*21), batch_size)),
-                             np.zeros((len(train_loader), (21+21) if segmentation else (21*21), batch_size)))
+    all_preds = {key: np.zeros((len(train_loader), eval(key), batch_size)) for key in ['42', '21*21']}
+    all_labels = {key: np.zeros((len(train_loader), eval(key), batch_size)) for key in ['42', '21*21']}
     for i, data in enumerate(train_loader):
         # Every data instance is an input + label pair
         _, inputs, labels = data
-        all_labels[i, :, :len(labels)] = labels.T
+        for key in all_labels:
+            all_labels[key][i, :, :len(labels[key])] = labels[key].T
+            labels[key] = labels[key].to(device)
         inputs = inputs.to(device)
-        labels = labels.to(device)
         # Zero your gradients for every batch!
         optimizer.zero_grad()
 
         # Make predictions for this batch
-        outputs = model(inputs)
-        preds = outputs.T.detach().cpu()
-        preds[preds >= 0.5] = 1
-        preds[preds < 0.5] = 0
-        all_preds[i, :, :len(labels)] = preds
-        # Compute the loss and its gradients
-        loss = loss_fn(outputs, labels.float())
+        outputs_dict = model(inputs)
+        loss = torch.zeros(1)
+        for key in outputs_dict:
+            preds = outputs_dict[key].T.detach().cpu()
+            preds[preds >= 0.5] = 1
+            preds[preds < 0.5] = 0
+            all_preds[key][i, :, :len(labels[key])] = preds
+            # Compute the loss and its gradients
+            loss += loss_fn(outputs_dict[key], labels[key].float())
         loss.backward()
 
         # Adjust learning weights
@@ -81,22 +84,24 @@ def train_one_epoch(model, optimizer, loss_fn, train_loader, epoch_index, tb_wri
             print('\tbatch {} loss: {}'.format(i + 1, last_loss))
             overall_loss += running_loss
             running_loss = 0.
-    all_preds = np.swapaxes(all_preds, 1, 2).reshape(-1, (21+21) if segmentation else (21*21))[:-(batch_size - len(labels)), :]
-    all_labels = np.swapaxes(all_labels, 1, 2).reshape(-1, (21+21) if segmentation else (21*21))[:-(batch_size - len(labels)), :]
-    acc = accuracy_score(all_labels, all_preds)
-    f1 = f1_score(all_labels, all_preds, average="micro")
-    jaccard = jaccard_score(all_labels, all_preds, average='micro')
+    jaccard = {}
+    for key in all_labels:
+        all_preds[key] = np.swapaxes(all_preds[key], 1, 2).reshape(-1, eval(key))[:-(batch_size - len(labels[key])), :]
+        all_labels[key] = np.swapaxes(all_labels[key], 1, 2).reshape(-1, eval(key))[:-(batch_size - len(labels[key])), :]
+        jaccard[key] = jaccard_score(all_labels[key], all_preds[key], average='macro')
+    # acc = accuracy_score(all_labels, all_preds)
+    # f1 = f1_score(all_labels, all_preds, average="micro")
     if i % 1000 != 999:
         last_loss = running_loss / (i % 1000 + 1)  # loss per batch
         print('  batch {} loss: {}'.format(i + 1, last_loss))
         overall_loss += running_loss
     overall_loss = overall_loss / len(train_loader)
-    return overall_loss, acc, f1, jaccard
+    return overall_loss, jaccard
 
 
-def train_model(model, optimizer, scheduler, loss_fn_train, experiment_name, cfg, train_loader, validation_loader,
+def train_model(model, optimizer, scheduler, loss_fn_train, experiment_name, cfg, train_loader, val_loader,
                 exp_dir="YOUth", start_epoch=0, resume=False):
-    segmentation = cfg.SEGMENTATION
+    multitask = cfg.MULTITASK
     loss_fn_valid = nn.BCEWithLogitsLoss()
     early_stopping = EarlyStopping(tolerance=5, min_delta=10)
     best_model_path = ''
@@ -122,47 +127,44 @@ def train_model(model, optimizer, scheduler, loss_fn_train, experiment_name, cfg
 
         # Make sure gradient tracking is on, and do a pass over the data
         model.train(True)
-        avg_loss, acc, f1, jaccard = train_one_epoch(model, optimizer, loss_fn_train, train_loader, epoch, writer,
-                                                     cfg.BATCH_SIZE, segmentation)
+        avg_loss, jaccard = train_one_epoch(model, optimizer, loss_fn_train, train_loader, epoch, writer, cfg.BATCH_SIZE)
 
         # We don't need gradients on to do reporting
         model.train(False)
 
         running_vloss = 0.0
         i = 0
-        all_preds, all_labels = (np.zeros((len(validation_loader), (21+21) if segmentation else (21*21), cfg.BATCH_SIZE)),
-                                 np.zeros((len(validation_loader), (21+21) if segmentation else (21*21), cfg.BATCH_SIZE)))
+        all_preds = {key: np.zeros((len(val_loader), eval(key), cfg.BATCH_SIZE)) for key in ['42', '21*21']}
+        all_labels = {key: np.zeros((len(val_loader), eval(key), cfg.BATCH_SIZE)) for key in ['42', '21*21']}
         with torch.no_grad():
-            for i, vdata in enumerate(validation_loader):
+            for i, vdata in enumerate(val_loader):
                 _, vinputs, vlabels = vdata
-                all_labels[i, :, :len(vlabels)] = vlabels.T
+                for key in all_labels:
+                    all_labels[key][i, :, :len(vlabels[key])] = vlabels[key].T
+                    vlabels[key] = vlabels[key].to(device)
                 vinputs = vinputs.to(device)
-                vlabels = vlabels.to(device)
-                voutputs = model(vinputs)
-                vpreds = voutputs.T.detach().cpu()
-                vpreds[vpreds >= 0.5] = 1
-                vpreds[vpreds < 0.5] = 0
-                all_preds[i, :, :len(vlabels)] = vpreds
-                vloss = loss_fn_valid(voutputs, vlabels.float())
+
+                vloss = torch.zeros(1)
+                voutputs_dict = model(vinputs)
+                for key in voutputs_dict:
+                    vpreds = voutputs_dict[key].T.detach().cpu()
+                    vpreds[vpreds >= 0.5] = 1
+                    vpreds[vpreds < 0.5] = 0
+                    all_preds[key][i, :, :len(vlabels[key])] = vpreds
+                    vloss += loss_fn_valid(voutputs_dict[key], vlabels[key].float())
                 running_vloss += vloss.detach()
-        all_preds = np.swapaxes(all_preds, 1, 2).reshape(-1, (21+21) if segmentation else (21*21))[:-(cfg.BATCH_SIZE - len(vlabels)), :]
-        all_labels = np.swapaxes(all_labels, 1, 2).reshape(-1, (21+21) if segmentation else (21*21))[:-(cfg.BATCH_SIZE - len(vlabels)), :]
-        vacc = accuracy_score(all_labels, all_preds)
-        vf1 = f1_score(all_labels, all_preds, average="micro")
-        vjaccard = jaccard_score(all_labels, all_preds, average="micro")
+
+        vjaccard = {}
+        for key in all_labels:
+            all_preds[key] = np.swapaxes(all_preds[key], 1, 2).reshape(-1, eval(key))[:-(cfg.BATCH_SIZE - len(vlabels[key])), :]
+            all_labels[key] = np.swapaxes(all_labels[key], 1, 2).reshape(-1, eval(key))[:-(cfg.BATCH_SIZE - len(vlabels[key])), :]
+            jaccard[key] = jaccard_score(all_labels[key], all_preds[key], average='macro')
         avg_vloss = running_vloss / (i + 1)
         scheduler.step(avg_vloss)
-        print('LOSS train {:.4f} valid {:.4f} - ACC train {:.4f} valid {:.4f} '
-              '- Jaccard train {:.4f} valid {:.4f}'.format(avg_loss, avg_vloss, acc, vacc, jaccard, vjaccard))
+        print('LOSS train {:.4f} valid {:.4f} - Jaccard train {:.4f} valid {:.4f}'.format(avg_loss, avg_vloss, jaccard, vjaccard))
 
         writer.add_scalars('Training vs. Validation Loss',
                            {'Training': avg_loss, 'Validation': avg_vloss},
-                           epoch + 1)
-        writer.add_scalars('Training vs. Validation Accuracy',
-                           {'Training': acc, 'Validation': vacc},
-                           epoch + 1)
-        writer.add_scalars('Training vs. Validation F1 Score',
-                           {'Training': f1, 'Validation': vf1},
                            epoch + 1)
         writer.add_scalars('Training vs. Validation Jaccard',
                            {'Training': jaccard, 'Validation': vjaccard},
@@ -235,7 +237,7 @@ def main():
         model.eval()
         model = model.to(device)
         acc, f1 = test_model(model, best_model_path, experiment_name, exp_dir, test_loader, True, device,
-                             cfg.SEGMENTATION)
+                             cfg.MULTITASK)
         if args.log_test_results:
             with open("test_results.txt", 'a+') as file1:
                 file1.write(f"{best_model_path}, {acc}, {f1}\n")

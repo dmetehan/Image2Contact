@@ -351,24 +351,21 @@ class YOUth10mSignature(Dataset):
 
     def get_label(self, idx):
         label = json.loads(self.img_labels_dets.loc[idx, "contact_type"])
-        if True:  # segmentation
-            label = list(set([tuple(elem) for elem in label]))
-            label = [[elem[0] for elem in label], [elem[1] for elem in label]]
-            label[0] = list(set(label[0]))
-            label[1] = list(set(label[1]))
-            onehot = torch.zeros(42)
-            for l in label[0]:
-                onehot[l] = 1
-            for l in label[1]:
-                onehot[21+l] = 1
-            return onehot
-        else:
-            # 21 * 21 dimensional labels
-            label = list(set([tuple(elem) for elem in label]))
-            onehot = np.zeros((21, 21))
-            for pair in label:
-                onehot[pair] = 1
-            return np.reshape(onehot, (21*21))
+        label = list(set([tuple(elem) for elem in label]))
+        label_seg = [[elem[0] for elem in label], [elem[1] for elem in label]]
+        label_seg[0] = list(set(label_seg[0]))
+        label_seg[1] = list(set(label_seg[1]))
+        onehot = {'42': torch.zeros(42), '12': torch.zeros(12), '21*21': torch.zeros(21, 21), '6*6': torch.zeros(6, 6)}
+        # 42 segmentation labels
+        for l in label_seg[0]:
+            onehot['42'][l] = 1
+        for l in label_seg[1]:
+            onehot['42'][21 + l] = 1
+        # 21 * 21 dimensional labels
+        for pair in label:
+            onehot['21*21'][pair] = 1
+        # TODO: Implement 12 and 6x6 labels
+        return onehot
 
     def __getitem__(self, idx):
         augment = self.augment if self._set == 'train' else ()

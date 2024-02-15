@@ -53,23 +53,23 @@ class ContactSignatureModel(nn.Module):
         # print(list(resnet50.named_parameters()))
         # print(resnet50)
         self.feat_extractor = resnet50
-        self.fc = nn.Linear(in_features=2048, out_features=(21+21) if segmentation else (21*21), bias=True)
+        self.output_keys = ['42', '12', '21*21', '6*6']
+        self.fc = {key: nn.Linear(in_features=2048, out_features=eval(key), bias=True) for key in self.output_keys}
 
     def forward(self, x):
         x = self.conv1(x)
         x = self.feat_extractor(x)
         x = torch.flatten(x, 1)
-        x = self.fc(x)
+        x_dict = {key: self.fc[key](x) for key in self.output_keys}
 
-        return x
+        return x_dict
 
 
 def initialize_model(cfg, device, finetune=False):
     model = ContactSignatureModel(backbone="resnet50", weights="IMAGENET1K_V2" if cfg.PRETRAINED else None,
                                   option=cfg.OPTION, copy_rgb_weights=cfg.COPY_RGB_WEIGHTS, finetune=finetune,
                                   segmentation=cfg.SEGMENTATION)
-    # loss_fn = nn.BCEWithLogitsLoss()
-    loss_fn = IoUBCELoss()
+    loss_fn = IoUBCELoss()  # MultiLabelSoftMargin loss is also good but needs to be adjusted for dictionary output from the model
     optimizer = optim.AdamW(model.parameters(), lr=cfg.LR, weight_decay=1e-4)
     return model, optimizer, loss_fn
 
