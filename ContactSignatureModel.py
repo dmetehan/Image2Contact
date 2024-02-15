@@ -7,7 +7,7 @@ from utils import Options
 
 class ContactSignatureModel(nn.Module):
     def __init__(self, backbone="resnet50", weights="IMAGENET1K_V2", option=Options.debug, copy_rgb_weights=False,
-                 finetune=False, segmentation=False):
+                 finetune=False):
         super(ContactSignatureModel, self).__init__()
         resnet50 = torch.hub.load("pytorch/vision", backbone, weights=weights)
         conv1_pretrained = list(resnet50.children())[0]
@@ -67,8 +67,7 @@ class ContactSignatureModel(nn.Module):
 
 def initialize_model(cfg, device, finetune=False):
     model = ContactSignatureModel(backbone="resnet50", weights="IMAGENET1K_V2" if cfg.PRETRAINED else None,
-                                  option=cfg.OPTION, copy_rgb_weights=cfg.COPY_RGB_WEIGHTS, finetune=finetune,
-                                  segmentation=cfg.SEGMENTATION)
+                                  option=cfg.OPTION, copy_rgb_weights=cfg.COPY_RGB_WEIGHTS, finetune=finetune)
     loss_fn = IoUBCELoss()  # MultiLabelSoftMargin loss is also good but needs to be adjusted for dictionary output from the model
     optimizer = optim.AdamW(model.parameters(), lr=cfg.LR, weight_decay=1e-4)
     return model, optimizer, loss_fn
