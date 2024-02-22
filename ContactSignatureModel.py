@@ -53,11 +53,22 @@ class ContactSignatureModel(nn.Module):
         # print(list(resnet50.named_parameters()))
         # print(resnet50)
         self.feat_extractor = resnet50
-        self.output_keys = ['42', '12', '21*21', '6*6']
+        self.thresholds = {'42': 0.3, '12': 0.5, '21*21': 0.1, '6*6': 0.2}
+        self.output_keys = list(self.thresholds.keys())
         self.fc42 = nn.Linear(in_features=2048, out_features=42, bias=True)
         self.fc12 = nn.Linear(in_features=2048, out_features=12, bias=True)
+        # self.fc21adult = nn.Linear(in_features=2048, out_features=21, bias=True)
+        # self.fc21child = nn.Linear(in_features=2048, out_features=21, bias=True)
+        # self.fc6adult = nn.Linear(in_features=2048, out_features=6, bias=True)
+        # self.fc6child = nn.Linear(in_features=2048, out_features=6, bias=True)
+
         self.fc21x21 = nn.Linear(in_features=2048, out_features=21*21, bias=True)
         self.fc6x6 = nn.Linear(in_features=2048, out_features=6*6, bias=True)
+
+        # self.fc21adult = nn.Linear(in_features=42, out_features=21, bias=True)
+        # self.fc21child = nn.Linear(in_features=42, out_features=21, bias=True)
+        # self.fc6adult = nn.Linear(in_features=12, out_features=6, bias=True)
+        # self.fc6child = nn.Linear(in_features=12, out_features=6, bias=True)
 
     def forward(self, x):
         x = self.conv1(x)
@@ -65,6 +76,21 @@ class ContactSignatureModel(nn.Module):
         x = torch.flatten(x, 1)
         x42 = self.fc42(x)
         x12 = self.fc12(x)
+
+        # x21adult = self.fc21adult(torch.relu(x42))
+        # x6adult = self.fc6adult(torch.relu(x12))
+        # x21child = self.fc21child(torch.relu(x42))
+        # x6child = self.fc6child(torch.relu(x12))
+
+        # x21adult = self.fc21adult(x)
+        # x6adult = self.fc6adult(x)
+        # x21child = self.fc21child(x)
+        # x6child = self.fc6child(x)
+
+        # # xadult * xchild.T
+        # x21x21 = torch.bmm(x21adult.reshape(-1, 21, 1), x21child.reshape(-1, 1, 21)).reshape(-1, 21*21)
+        # x6x6 = torch.bmm(x6adult.reshape(-1, 6, 1), x6child.reshape(-1, 1, 6)).reshape(-1, 6*6)
+
         x21x21 = self.fc21x21(x)
         x6x6 = self.fc6x6(x)
 
@@ -74,7 +100,8 @@ class ContactSignatureModel(nn.Module):
 def initialize_model(cfg, device, finetune=False):
     model = ContactSignatureModel(backbone="resnet50", weights="IMAGENET1K_V2" if cfg.PRETRAINED else None,
                                   option=cfg.OPTION, copy_rgb_weights=cfg.COPY_RGB_WEIGHTS, finetune=finetune)
-    loss_fn = IoUBCELoss()  # MultiLabelSoftMargin loss is also good but needs to be adjusted for dictionary output from the model
+    # MultiLabelSoftMargin loss is also good but needs to be adjusted for dictionary output from the model
+    loss_fn = IoUBCELoss()
     optimizer = optim.AdamW(model.parameters(), lr=cfg.LR, weight_decay=1e-4)
     return model, optimizer, loss_fn
 

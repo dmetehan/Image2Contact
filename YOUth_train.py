@@ -47,8 +47,8 @@ def train_one_epoch(model, optimizer, loss_fn, train_loader, epoch_index, tb_wri
     # iter(training_loader) so that we can track the batch
     # index and do some intra-epoch reporting
     i = 0
-    all_preds = {key: np.zeros((len(train_loader), eval(key), batch_size)) for key in model.output_keys}
-    all_labels = {key: np.zeros((len(train_loader), eval(key), batch_size)) for key in model.output_keys}
+    all_preds = {key: np.zeros((len(train_loader.dataset), eval(key), batch_size)) for key in model.output_keys}
+    all_labels = {key: np.zeros((len(train_loader.dataset), eval(key), batch_size)) for key in model.output_keys}
     for i, data in enumerate(train_loader):
         # Every data instance is an input + label pair
         _, inputs, labels = data
@@ -64,11 +64,13 @@ def train_one_epoch(model, optimizer, loss_fn, train_loader, epoch_index, tb_wri
         loss = torch.zeros(1).to(device)
         for k, key in enumerate(labels):
             preds = outputs_list[k].T.detach().cpu()
-            preds[preds >= 0.5] = 1
-            preds[preds < 0.5] = 0
+            preds[preds >= model.thresholds[key]] = 1
+            preds[preds < model.thresholds[key]] = 0
             all_preds[key][i, :, :len(labels[key])] = preds
             # Compute the loss and its gradients
-            loss += loss_fn(outputs_list[k], labels[key].float())
+            if key == '21*21':
+                loss += loss_fn(outputs_list[k], labels[key].float())
+                # print(key, loss)
         loss.backward()
 
         # Adjust learning weights
@@ -88,7 +90,7 @@ def train_one_epoch(model, optimizer, loss_fn, train_loader, epoch_index, tb_wri
     for key in all_labels:
         all_preds[key] = np.swapaxes(all_preds[key], 1, 2).reshape(-1, eval(key))[:-(batch_size - len(labels[key])), :]
         all_labels[key] = np.swapaxes(all_labels[key], 1, 2).reshape(-1, eval(key))[:-(batch_size - len(labels[key])), :]
-        jaccard[key] = jaccard_score(all_labels[key], all_preds[key], average='macro')
+        jaccard[key] = jaccard_score(all_labels[key], all_preds[key], average='micro', zero_division=0)
     # acc = accuracy_score(all_labels, all_preds)
     # f1 = f1_score(all_labels, all_preds, average="micro")
     if i % 1000 != 999:
@@ -102,7 +104,7 @@ def train_one_epoch(model, optimizer, loss_fn, train_loader, epoch_index, tb_wri
 def train_model(model, optimizer, scheduler, loss_fn_train, experiment_name, cfg, train_loader, val_loader,
                 exp_dir="YOUth", start_epoch=0, resume=False):
     multitask = cfg.MULTITASK
-    loss_fn_valid = nn.BCEWithLogitsLoss()
+    loss_fn_valid = nn.BCEWithLogitsLoss()  # using IOU as loss for validation doesn't work
     early_stopping = EarlyStopping(tolerance=5, min_delta=10)
     best_model_path = ''
     if resume:
@@ -134,8 +136,8 @@ def train_model(model, optimizer, scheduler, loss_fn_train, experiment_name, cfg
 
         running_vloss = 0.0
         i = 0
-        all_preds = {key: np.zeros((len(val_loader), eval(key), cfg.BATCH_SIZE)) for key in model.output_keys}
-        all_labels = {key: np.zeros((len(val_loader), eval(key), cfg.BATCH_SIZE)) for key in model.output_keys}
+        all_preds = {key: np.zeros((len(val_loader.dataset), eval(key), cfg.BATCH_SIZE)) for key in model.output_keys}
+        all_labels = {key: np.zeros((len(val_loader.dataset), eval(key), cfg.BATCH_SIZE)) for key in model.output_keys}
         with torch.no_grad():
             for i, vdata in enumerate(val_loader):
                 _, vinputs, vlabels = vdata
@@ -148,23 +150,24 @@ def train_model(model, optimizer, scheduler, loss_fn_train, experiment_name, cfg
                 voutputs_list = model(vinputs)
                 for k, key in enumerate(vlabels):
                     vpreds = voutputs_list[k].T.detach().cpu()
-                    vpreds[vpreds >= 0.5] = 1
-                    vpreds[vpreds < 0.5] = 0
+                    vpreds[vpreds >= model.thresholds[key]] = 1
+                    vpreds[vpreds < model.thresholds[key]] = 0
                     all_preds[key][i, :, :len(vlabels[key])] = vpreds
-                    vloss += loss_fn_valid(voutputs_list[k], vlabels[key].float())
+                    if key == '21*21':
+                        vloss += loss_fn_valid(voutputs_list[k], vlabels[key].float())
                 running_vloss += vloss.detach().item()
 
         vjaccard = {}
         for key in all_labels:
             all_preds[key] = np.swapaxes(all_preds[key], 1, 2).reshape(-1, eval(key))[:-(cfg.BATCH_SIZE - len(vlabels[key])), :]
             all_labels[key] = np.swapaxes(all_labels[key], 1, 2).reshape(-1, eval(key))[:-(cfg.BATCH_SIZE - len(vlabels[key])), :]
-            vjaccard[key] = jaccard_score(all_labels[key], all_preds[key], average='macro')
+            vjaccard[key] = jaccard_score(all_labels[key], all_preds[key], average='micro', zero_division=0)
         avg_vloss = running_vloss / (i + 1)
         scheduler.step(avg_vloss)
         print('LOSS train {:.4f} valid {:.4f} - Jaccard train {} valid {}'.format(avg_loss,
                                                                                   avg_vloss,
-                                                                                  ','.join([f'{key}: {jaccard[key].item():.4f}' for key in model.output_keys]),
-                                                                                  ','.join([f'{key}: {vjaccard[key].item():.4f}' for key in model.output_keys])))
+                                                                                  ','.join([f'{key}: {jaccard[key].item():.2%}' for key in model.output_keys]),
+                                                                                  ','.join([f'{key}: {vjaccard[key].item():.2%}' for key in model.output_keys])))
         writer.add_scalars('Training vs. Validation Loss',
                            {'Training': avg_loss, 'Validation': avg_vloss},
                            epoch + 1)
@@ -232,6 +235,8 @@ def main():
         model_name, start_epoch = models[-1]
         model.load_state_dict(torch.load(f"{exp_dir}/{model_name}"))
     train_loader, validation_loader, test_loader = init_datasets_with_cfg(root_dir_ssd, root_dir_ssd, cfg)
+    print(f'Training size: {len(train_loader.dataset)}, Validation size: {len(validation_loader.dataset)}, '
+          f'Test size: {len(test_loader.dataset)}')
     best_model_path = train_model(model, optimizer, scheduler, loss_fn, experiment_name, cfg, train_loader,
                                   validation_loader, exp_dir=exp_dir, start_epoch=start_epoch, resume=args.resume)
     if args.test:

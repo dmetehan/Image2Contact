@@ -29,8 +29,6 @@ FOLDS = [["B78799", "B82756", "B00157", "B51311", "B60483", "B61791", "B68344", 
           "B77974", "B48908", "B38777", "B80924", "B00018", "B83286", "B62414", "B84259", "B64172", "B54732"]]
 
 
-# TODO: Add YOUth_signature_annotations.csv
-
 # Images should be cropped around interacting people pairs before using this class.
 class YOUth10mSignature(Dataset):
     def __init__(self, root_dir, camera='cam1', transform=None, target_transform=None, option=Options.jointmaps,
@@ -38,13 +36,14 @@ class YOUth10mSignature(Dataset):
                  _set=None, train_frac=None, fold=0):
         self.fold_sets = self.convert_folds_to_sets()
         set_subjects = self.fold_sets[fold][_set]
+        fold_dir = f'/home/sac/GithubRepos/Pose2Contact/data/youth/signature/fold{fold}/{_set}'
         self._set = _set
         self.option = option
         if Aug.crop in augment:
             self.resize = (int(round((1.14285714286 * target_size[0]))),
-                                  int(round((1.14285714286 * target_size[1]))))  # 224 to 256, 112 to 128 etc.
+                           int(round((1.14285714286 * target_size[1]))))  # 224 to 256, 112 to 128 etc.
         else:
-            self.resize = target_size
+            self.resize = list(target_size)
         self.target_size = target_size
         self.heatmaps_dir = os.path.join(root_dir, "heatmaps", camera)
         self.gauss_hmaps_dir = os.path.join(root_dir, "gauss_hmaps", camera)
@@ -56,29 +55,15 @@ class YOUth10mSignature(Dataset):
             self.depthmaps_dir = os.path.join(root_dir, depthmaps_dir)
         os.makedirs(self.gauss_hmaps_dir, exist_ok=True)
         os.makedirs(self.joint_hmaps_dir, exist_ok=True)
-        img_labels = pd.read_csv("dataset/YOUth_signature_annotations.csv", index_col=0)
-        img_labels = img_labels[img_labels['subject'].str.contains('|'.join(set_subjects))]
-        labels_dets_file = os.path.join(root_dir, "pose_detections.json")
+        # img_labels = pd.read_csv("dataset/YOUth_signature_annotations.csv", index_col=0)
+        # img_labels = img_labels[img_labels['subject'].str.contains('|'.join(set_subjects))]
+        labels_dets_file = os.path.join(fold_dir, "pose_detections.json")
         img_labels_dets = pd.read_json(labels_dets_file)
         # filter only _set subjects:
         self.img_labels_dets = img_labels_dets[img_labels_dets['crop_path'].str.contains('|'.join(set_subjects))].reset_index(drop=True)
-
-        def split_subject_column(x):
-            return x.split('/')[-2]
-
-        def split_frame_column(x):
-            return x.split('/')[-1]
-        self.img_labels_dets['subject'] = self.img_labels_dets['crop_path'].apply(split_subject_column)
-        self.img_labels_dets['frame'] = self.img_labels_dets['crop_path'].apply(split_frame_column)
-        self.need_swap = self.check_swapping_based_on_bbox_size(self.img_labels_dets)
-        if train_frac is None or _set != 'train':
-            self.img_labels_dets = self.merge_labels_dets(img_labels, self.img_labels_dets)
-        else:
-            assert 0 < train_frac <= 1, "train_frac should be between (0, 1]"
-            print(f"Choosing {train_frac} of the training set ({len(self.img_labels_dets)})!")
-            self.img_labels_dets = self.img_labels_dets.sample(frac=train_frac, random_state=42).reset_index(drop=True)
-            self.need_swap = self.need_swap.sample(frac=train_frac, random_state=42).reset_index(drop=True)
-            print(f"After selection: {len(self.img_labels_dets)} frames")
+        self.img_labels_dets['subject'] = self.img_labels_dets['crop_path'].apply(lambda x: x.split('/')[-2])
+        self.img_labels_dets['frame'] = self.img_labels_dets['crop_path'].apply(lambda x: x.split('/')[-1])
+        # self.img_labels_dets = self.merge_labels_dets(img_labels, self.img_labels_dets)
         self.transform = transform
         self.target_transform = target_transform
         self.augment = augment
@@ -87,7 +72,8 @@ class YOUth10mSignature(Dataset):
         self.flip_pairs_pose = [[1, 2], [3, 4], [5, 6], [7, 8], [9, 10], [11, 12], [13, 14], [15, 16]]
         self.flip_pairs_bodyparts = [[3, 4], [5, 6], [7, 8], [9, 10], [11, 12], [13, 14]]
         self.debug_printed = False
-        self.color_aug = transforms.Compose([transforms.RandomPhotometricDistort(), transforms.GaussianBlur(3, [0.01, 1.0])])
+        self.color_aug = transforms.Compose(
+            [transforms.RandomPhotometricDistort(), transforms.GaussianBlur(3, [0.01, 1.0])])
         self.recalc_joint_hmaps = recalc_joint_hmaps
         self.reg_mapper = self.comb_regs('dataset/combined_regions_6.txt')
 
@@ -102,39 +88,19 @@ class YOUth10mSignature(Dataset):
                               })
         return fold_sets
 
-    @staticmethod
-    def check_swapping_based_on_bbox_size(img_labels_dets):
-        swap = [False for _ in range(len(img_labels_dets))]
-        areas_with_two_dets = np.array([[(bbox[2] - bbox[0]) * (bbox[3] - bbox[1]) for bbox in lst]
-                                        for lst in img_labels_dets.loc[:, 'bbxes'] if len(lst) == 2])
-        parent_area_mean = np.mean(np.max(areas_with_two_dets, axis=1))
-        child_area_mean = np.mean(np.min(areas_with_two_dets, axis=1))
-        threshold = (parent_area_mean + child_area_mean) / 2
-        for i in range(len(img_labels_dets)):
-            area = [(bbox[2] - bbox[0]) * (bbox[3] - bbox[1]) for bbox in img_labels_dets.loc[i, 'bbxes']]
-            if len(area) == 0:
-                continue
-            elif len(area) == 1:  # 1 detection
-                if area[0] < threshold:  # Needs swapping! index 0 is child
-                    swap[i] = True
-            else:  # 2 detections
-                if area[1] > area[0]:
-                    # change the order of people (pose, bbxes, heatmaps, etc.) - parent should come first.
-                    swap[i] = True  # Needs swapping! index 0 is child and index 1 is parent
-        return pd.DataFrame(swap)
-
-    @staticmethod
-    def merge_labels_dets(img_labels, img_labels_dets):
-        assert len(img_labels[img_labels.duplicated(subset=['subject', 'frame', 'contact_type'])]) == 0, \
-            "DUPLICATES FOUND IN img_labels"
-        missing_frames = defaultdict(list)
-        for index, row in img_labels.iterrows():
-            crop_path = f"/home/sac/GithubRepos/ContactClassification-ssd/YOUth10mSignatures/all/crops/cam1/{row['subject']}/{row['frame']}"
-            if crop_path not in img_labels_dets['crop_path'].unique():
-                print(crop_path)
-                missing_frames[row['subject']].append(crop_path)
-        assert len(missing_frames) == 0, "There are missing frames in the pose_detections.json!"
-        return pd.merge(img_labels, img_labels_dets.drop(columns='contact_type'), how='inner', on=['subject', 'frame'])
+    # @staticmethod
+    # def merge_labels_dets(img_labels, img_labels_dets):
+    #     assert len(img_labels[img_labels.duplicated(subset=['subject', 'frame', 'contact_type'])]) == 0, \
+    #         "DUPLICATES FOUND IN img_labels"
+    #     missing_frames = defaultdict(list)
+    #     for index, row in img_labels.iterrows():
+    #         crop_path = f"/home/sac/GithubRepos/ContactClassification-ssd/YOUth10mSignatures/all/crops/cam1/{row['subject']}/{row['frame']}"
+    #         if crop_path not in img_labels_dets['crop_path'].unique():
+    #             print(crop_path)
+    #             missing_frames[row['subject']].append(crop_path)
+    #     if len(missing_frames) > 0:
+    #         f"There are {len(missing_frames)} missing detections in the pose_detections.json! Using pose detected frames only"
+    #     return pd.merge(img_labels, img_labels_dets.drop(columns='contact_type'), how='inner', on=['subject', 'frame'])
 
     def __len__(self):
         return len(self.img_labels_dets)
@@ -217,14 +183,13 @@ class YOUth10mSignature(Dataset):
                     joint_hmaps = np.zeros((34, self.resize[0], self.resize[1]), dtype=np.float32)
             else:
                 joint_hmaps = (joint_hmaps - np.min(joint_hmaps)) / (np.max(joint_hmaps) - np.min(joint_hmaps))
-            if self.need_swap.loc[idx, 0]:
-                joint_hmaps = np.vstack((joint_hmaps[17:, :, :], joint_hmaps[:17, :, :]))
             if rgb:
                 crop = Image.open(crop_path)
                 # noinspection PyTypeChecker
                 joint_hmaps_rgb = np.concatenate((joint_hmaps,
-                                                  np.transpose(np.array(crop.resize(self.resize), dtype=np.float32) / 255,
-                                                               (2, 0, 1))), axis=0)
+                                                  np.transpose(
+                                                      np.array(crop.resize(self.resize), dtype=np.float32) / 255,
+                                                      (2, 0, 1))), axis=0)
                 return joint_hmaps_rgb, label
             else:
                 return joint_hmaps, label
@@ -296,14 +261,17 @@ class YOUth10mSignature(Dataset):
         bodyparts_base_path = f'{bodyparts_path.split(".")[0]}'
         if os.path.exists(bodyparts_path):
             # convert colors into boolean maps per body part channel (+background)
-            bodyparts_img = np.asarray(transforms.Resize(self.resize, interpolation=InterpolationMode.NEAREST)(Image.open(bodyparts_path)), dtype=np.uint32)
+            bodyparts_img = np.asarray(
+                transforms.Resize(self.resize, interpolation=InterpolationMode.NEAREST)(Image.open(bodyparts_path)),
+                dtype=np.uint32)
             x = bodyparts_img // 127
             x = x * np.array([9, 3, 1])
             x = np.add.reduce(x, 2)
             bodyparts = [(x == i) for i in part_ids]
             bodyparts = np.stack(bodyparts, axis=0).astype(np.float32)
             if self.option == 0:  # debug option
-                crop = Image.open(f'{os.path.join(self.crops_dir, os.path.basename(self.img_labels_dets.loc[idx, "crop_path"]))}')
+                crop = Image.open(
+                    f'{os.path.join(self.crops_dir, os.path.basename(self.img_labels_dets.loc[idx, "crop_path"]))}')
                 crop = np.array(crop.resize(self.resize))
                 plt.imshow(crop)
                 plt.imshow(bodyparts_img, alpha=0.5)
@@ -314,14 +282,14 @@ class YOUth10mSignature(Dataset):
                     plt.show()
             return bodyparts
         elif os.path.exists(bodyparts_base_path + '_0.png'):
-            bodyparts = np.zeros(self.resize + (15,), dtype=np.float32)
+            bodyparts = np.zeros(self.resize + [15], dtype=np.float32)
             for i in range(5):
                 cur_part_path = f"{bodyparts_base_path}_{i}.png"
                 # convert colors into boolean maps per body part channel (+background)
                 bodyparts_img = np.asarray(
                     transforms.Resize(self.resize, interpolation=InterpolationMode.NEAREST)(Image.open(cur_part_path)),
                     dtype=np.uint32)
-                bodyparts[:, :, (3*i):(3*i+3)] = bodyparts_img / 255.0  # normalization
+                bodyparts[:, :, (3 * i):(3 * i + 3)] = bodyparts_img / 255.0  # normalization
                 # if self.option == Options.debug:  # debug option
                 # crop = Image.open(f'{os.path.join(self.crops_dir, os.path.basename(self.img_labels_dets.loc[idx, "crop_path"]))}')
                 # crop = np.array(crop.resize(self.resize))
@@ -337,10 +305,13 @@ class YOUth10mSignature(Dataset):
         depthmaps_path = f"{os.path.join(self.depthmaps_dir, 'cam1', '/'.join(self.img_labels_dets.loc[idx, 'crop_path'].split('/')[-2:])).replace('.jpg', '.png')}"
         if os.path.exists(depthmaps_path):
             # convert colors into boolean maps per body part channel (+background)
-            depthmaps_img = np.asarray(transforms.Resize(self.resize, interpolation=InterpolationMode.NEAREST)(Image.open(depthmaps_path)), dtype=np.uint32)
+            depthmaps_img = np.asarray(
+                transforms.Resize(self.resize, interpolation=InterpolationMode.NEAREST)(Image.open(depthmaps_path)),
+                dtype=np.uint32)
             depthmaps = depthmaps_img.astype(np.float32) / 256  # normalization for depthmaps
             if self.option == 0:  # debug option
-                crop = Image.open(f'{os.path.join(self.crops_dir, os.path.basename(self.img_labels_dets.loc[idx, "crop_path"]))}')
+                crop = Image.open(
+                    f'{os.path.join(self.crops_dir, os.path.basename(self.img_labels_dets.loc[idx, "crop_path"]))}')
                 crop = np.array(crop.resize(self.resize))
                 plt.imshow(crop)
                 plt.imshow(depthmaps_img, alpha=0.5)
@@ -351,32 +322,27 @@ class YOUth10mSignature(Dataset):
             return np.zeros((1, self.resize[0], self.resize[1]), dtype=np.float32)
 
     def get_label(self, idx):
-        label = json.loads(self.img_labels_dets.loc[idx, "contact_type"])
-        label = list(set([tuple(elem) for elem in label]))
-        label_seg = [[elem[0] for elem in label], [elem[1] for elem in label]]
-        label_seg[0] = list(set(label_seg[0]))
-        label_seg[1] = list(set(label_seg[1]))
-        onehot = {'42': torch.zeros(42), '12': torch.zeros(12), '21*21': torch.zeros(21, 21), '6*6': torch.zeros(6, 6)}
-        # 42 segmentation labels
-        for l in label_seg[0]:
-            onehot['42'][l] = 1
-        for l in label_seg[1]:
-            onehot['42'][21 + l] = 1
-        # 12 segmentation labels
-        for l in label_seg[0]:
-            onehot['12'][self.reg_mapper(l)] = 1
-        for l in label_seg[1]:
-            onehot['12'][6 + self.reg_mapper(l)] = 1
-        # 21 * 21 dimensional labels
-        for pair in label:
-            onehot['21*21'][pair] = 1
-        # 6 * 6 dimensional labels
-        for pair in label:
-            onehot['6*6'][(self.reg_mapper(pair[0]), self.reg_mapper(pair[1]))] = 1
-        # TODO: Implement 12 and 6x6 labels
-        onehot['21*21'] = onehot['21*21'].reshape(21*21)
-        onehot['6*6'] = onehot['6*6'].reshape(6*6)
+        onehot = {'42': self.onehot_segmentation(self.img_labels_dets.loc[idx, "seg21_adult"], self.img_labels_dets.loc[idx, "seg21_child"], res=21),
+                  '12': self.onehot_segmentation(self.img_labels_dets.loc[idx, "seg6_adult"], self.img_labels_dets.loc[idx, "seg6_child"], res=6),
+                  '21*21': self.onehot_sig(self.img_labels_dets.loc[idx, "signature21x21"], res=21),
+                  '6*6': self.onehot_sig(self.img_labels_dets.loc[idx, "signature6x6"], res=6)}
         return onehot
+
+    @staticmethod
+    def onehot_segmentation(adult_seg, child_seg, res=21):
+        mat = torch.zeros(res + res, dtype=torch.int8)
+        for adult in adult_seg:
+            mat[adult] = 1
+        for child in child_seg:
+            mat[res + child] = 1
+        return mat.flatten()
+
+    @staticmethod
+    def onehot_sig(signature, res=21):
+        mat = torch.zeros(res, res, dtype=torch.int8)
+        for adult, child in signature:
+            mat[adult, child] = 1
+        return mat.flatten()
 
     @staticmethod
     def comb_regs(path):
@@ -448,17 +414,17 @@ class YOUth10mSignature(Dataset):
                                        Options.jointmaps_bodyparts, Options.jointmaps_bodyparts_depth]:
                         for i, j in self.flip_pairs_pose:
                             data[i, :, :], data[j, :, :] = data[j, :, :], data[i, :, :]
-                            data[i+17, :, :], data[j+17, :, :] = data[j+17, :, :], data[i+17, :, :]
+                            data[i + 17, :, :], data[j + 17, :, :] = data[j + 17, :, :], data[i + 17, :, :]
                     # swap channels of left/right pairs of body-part channels
                     if self.option in [Options.jointmaps_rgb_bodyparts]:
                         for i, j in self.flip_pairs_bodyparts:
-                            data[i+37, :, :], data[j+37, :, :] = data[j+37, :, :], data[i+37, :, :]
+                            data[i + 37, :, :], data[j + 37, :, :] = data[j + 37, :, :], data[i + 37, :, :]
                     elif self.option in [Options.rgb_bodyparts]:
                         for i, j in self.flip_pairs_bodyparts:
-                            data[i+3, :, :], data[j+3, :, :] = data[j+3, :, :], data[i+3, :, :]
+                            data[i + 3, :, :], data[j + 3, :, :] = data[j + 3, :, :], data[i + 3, :, :]
                     elif self.option in [Options.jointmaps_bodyparts, Options.jointmaps_bodyparts_depth]:
                         for i, j in self.flip_pairs_bodyparts:
-                            data[i+34, :, :], data[j+34, :, :] = data[j+34, :, :], data[i+34, :, :]
+                            data[i + 34, :, :], data[j + 34, :, :] = data[j + 34, :, :], data[i + 34, :, :]
                     elif self.option in [Options.bodyparts]:
                         for i, j in self.flip_pairs_bodyparts:
                             data[i, :, :], data[j, :, :] = data[j, :, :], data[i, :, :]
@@ -466,16 +432,18 @@ class YOUth10mSignature(Dataset):
             elif aug == Aug.crop:
                 i = torch.randint(0, self.resize[0] - self.target_size[0] + 1, size=(1,)).item()
                 j = torch.randint(0, self.resize[1] - self.target_size[1] + 1, size=(1,)).item()
-                data = data[:, i:i+self.target_size[0], j:j+self.target_size[1]]
+                data = data[:, i:i + self.target_size[0], j:j + self.target_size[1]]
             elif aug == Aug.color:
                 # random color-based augmentations to the rgb channels
                 if self.option in [Options.jointmaps_rgb, Options.jointmaps_rgb_bodyparts]:
-                    data[34:37, :, :] = np.transpose(self.color_aug(Image.fromarray(np.transpose(255 * data[34:37, :, :],
-                                                                                                 (1, 2, 0)).astype(np.uint8))),
-                                                     (2, 0, 1)).astype(np.float32) / 255
+                    data[34:37, :, :] = np.transpose(
+                        self.color_aug(Image.fromarray(np.transpose(255 * data[34:37, :, :],
+                                                                    (1, 2, 0)).astype(np.uint8))),
+                        (2, 0, 1)).astype(np.float32) / 255
                 elif self.option in [Options.rgb, Options.rgb_bodyparts]:
                     data[:3, :, :] = np.transpose(self.color_aug(Image.fromarray(np.transpose(255 * data[:3, :, :],
-                                                                                              (1, 2, 0)).astype(np.uint8))),
+                                                                                              (1, 2, 0)).astype(
+                        np.uint8))),
                                                   (2, 0, 1)).astype(np.float32) / 255
         return data
 
