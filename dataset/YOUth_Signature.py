@@ -16,17 +16,6 @@ from torch.utils.data.sampler import WeightedRandomSampler
 
 from utils import Aug, Options, parse_config
 
-# Using folds from Pose2Contact
-FOLDS = [["B78799", "B82756", "B00157", "B51311", "B60483", "B61791", "B68344", "B53434", "B72504", "B87499",
-          "B70930", "B00501", "B41317", "B75777", "B41974", "B42568", "B61501", "B33718", "B85387", "B51848"],
-         ["B45742", "B47859", "B64612", "B80116", "B44040", "B54074", "B00402", "B51920", "B71725", "B55777",
-          "B63936", "B00836", "B70410", "B67411", "B48098", "B66340", "B69982", "B64396", "B39886", "B56066"],
-         ["B71467", "B43691", "B41645", "B58671", "B84543", "B00432", "B33892", "B73095", "B56392",
-          "B36445", "B49702", "B78220", "B48446", "B72088", "B40508", "B86218", "B59400", "B35985", "B49249"],
-         ["B60004", "B75027", "B62594", "B49427", "B00071", "B35574", "B46724", "B75514", "B60741", "B62722",
-          "B00738", "B00230", "B65854", "B45358", "B46237", "B40295", "B35191", "B81926", "B34489", "B83755"],
-         ["B87817", "B00267", "B45111", "B36241", "B77168", "B44801", "B74193", "B37295", "B50284", "B39657",
-          "B77974", "B48908", "B38777", "B80924", "B00018", "B83286", "B62414", "B84259", "B64172", "B54732"]]
 
 
 # Images should be cropped around interacting people pairs before using this class.
@@ -34,9 +23,12 @@ class YOUth10mSignature(Dataset):
     def __init__(self, root_dir, camera='cam1', transform=None, target_transform=None, option=Options.jointmaps,
                  target_size=(224, 224), augment=(), recalc_joint_hmaps=False, bodyparts_dir=None, depthmaps_dir=None,
                  _set=None, train_frac=None, fold=0):
-        self.fold_sets = self.convert_folds_to_sets()
+        # Using folds from Pose2Contact
+        pose2contact_dir = '/home/sac/GithubRepos/Pose2Contact/data/youth/signature'
+        folds_path = os.path.join(pose2contact_dir, 'all', 'folds.json')
+        fold_dir = os.path.join(pose2contact_dir, f'fold{fold}', f'{_set}')
+        self.fold_sets = self.convert_folds_to_sets(folds_path)
         set_subjects = self.fold_sets[fold][_set]
-        fold_dir = f'/home/sac/GithubRepos/Pose2Contact/data/youth/signature/fold{fold}/{_set}'
         self._set = _set
         self.option = option
         if Aug.crop in augment:
@@ -78,13 +70,15 @@ class YOUth10mSignature(Dataset):
         self.reg_mapper = self.comb_regs('dataset/combined_regions_6.txt')
 
     @staticmethod
-    def convert_folds_to_sets():
+    def convert_folds_to_sets(folds_path):
+        with open(folds_path) as f:
+            folds = json.load(f)
         fold_sets = []
-        for f in range(len(FOLDS)):
-            fold_sets.append({'test': FOLDS[f],
-                              'val': FOLDS[f],
-                              'train': list(itertools.chain.from_iterable([FOLDS[i]
-                                                                           for i in range(len(FOLDS)) if i != f]))
+        for f in range(len(folds)):
+            fold_sets.append({'test': folds[f],
+                              'val': folds[f],
+                              'train': list(itertools.chain.from_iterable([folds[i]
+                                                                           for i in range(len(folds)) if i != f]))
                               })
         return fold_sets
 

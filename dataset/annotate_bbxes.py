@@ -67,7 +67,12 @@ def process_keypress(key, pose_dets, idx):
 
 def analyze_annotations(pose_dets):
     swap_count, parent_error_count, child_error_count = 0, 0, 0
+    one_detection_cnt, two_detection_cnt = 0, 0
     for idx, bbxes_identity in pose_dets['bbxes_identity'].items():
+        if len(pose_dets['preds'][idx]) == 1:
+            one_detection_cnt += 1
+        if len(pose_dets['preds'][idx]) == 2:
+            two_detection_cnt += 1
         for character in bbxes_identity:
             if character == 's':
                 swap_count += 1
@@ -81,18 +86,25 @@ def analyze_annotations(pose_dets):
             if character == 'm':
                 break  # not counting mixed up ones
     print(f"{len(pose_dets['bbxes_identity'])} total frames with at least 1 person detection.")
-    print(f"{swap_count} needs swapping.\n{parent_error_count} incorrect parent keypoints.\n{child_error_count} incorrect parent keypoints")
+    print(f"{swap_count} needs swapping.\n{parent_error_count} incorrect parent keypoints.\n{child_error_count} incorrect child keypoints")
+    print(f"{one_detection_cnt} frames only one person detected, {two_detection_cnt} frames both people are detected!")
 
 
-def fix_order(pose_dets):
+def fix_order(pose_dets, remove_single_detections=True):
     new_pose_dets = {'preds': {}, 'bbxes': {}, 'crop_path': {}, 'contact_type': {}}
     swap_count = 0
+    incorrect_detection_count = 0
+    single_det_count = 0
     for idx, bbxes_identity in pose_dets['bbxes_identity'].items():
-        new_pose_dets['crop_path'][idx] = pose_dets['crop_path'][idx]
-        new_pose_dets['contact_type'][idx] = pose_dets['contact_type'][idx]
         if len(bbxes_identity) > 0 and bbxes_identity[0] == 's':
             swap_count += 1
+            if len(bbxes_identity) > 1 and bbxes_identity[1] in ['p', 'c', 'b']:
+                incorrect_detection_count += 1
+                continue  # removing 74 incorrect parent detections and 125 incorrect child detections
             if len(pose_dets['preds'][idx]) == 1:
+                if remove_single_detections:
+                    single_det_count += 1
+                    continue  # removing 645 frames with only one person detected.
                 new_pose_dets['preds'][idx] = [np.zeros_like(pose_dets['preds'][idx][0], dtype=int).tolist(), pose_dets['preds'][idx][0]]
                 new_pose_dets['bbxes'][idx] = [np.zeros_like(pose_dets['bbxes'][idx][0], dtype=int).tolist(), pose_dets['bbxes'][idx][0]]
             elif len(pose_dets['preds'][idx]) == 2:
@@ -101,7 +113,13 @@ def fix_order(pose_dets):
             else:
                 raise ValueError(f"{pose_dets['preds'][idx]} for idx={idx} has {len(pose_dets['preds'][idx])} elements!")
         else:
+            if len(bbxes_identity) > 0 and bbxes_identity[0] in ['p', 'c', 'b']:
+                incorrect_detection_count += 1
+                continue  # removing 74 incorrect parent detections and 125 incorrect child detections
             if len(pose_dets['preds'][idx]) == 1:
+                if remove_single_detections:
+                    single_det_count += 1
+                    continue  # removing 645 frames with only one person detected.
                 new_pose_dets['preds'][idx] = [pose_dets['preds'][idx][0], np.zeros_like(pose_dets['preds'][idx][0], dtype=int).tolist()]
                 new_pose_dets['bbxes'][idx] = [pose_dets['bbxes'][idx][0], np.zeros_like(pose_dets['bbxes'][idx][0], dtype=int).tolist()]
             elif len(pose_dets['preds'][idx]) == 2:
@@ -109,7 +127,12 @@ def fix_order(pose_dets):
                 new_pose_dets['bbxes'][idx] = pose_dets['bbxes'][idx]
             else:
                 raise ValueError(f"{pose_dets['preds'][idx]} for idx={idx} has {len(pose_dets['preds'][idx])} elements!")
+        new_pose_dets['crop_path'][idx] = pose_dets['crop_path'][idx]
+        new_pose_dets['contact_type'][idx] = pose_dets['contact_type'][idx]
     print(f"{swap_count} poses swapped!")
+    print(f"{incorrect_detection_count} incorrect detections removed!")
+    print(f"{single_det_count} single detections removed!")
+    print(f"Out of {len(pose_dets['bbxes_identity'])} frames, {len(new_pose_dets['contact_type'])} frames remaining!")
     return new_pose_dets
 
 
@@ -159,12 +182,15 @@ def main():
         cv2.destroyWindow(window_name)
         if not response:
             break
+    correct_pose_detections = True
+    remove_single_detections = True
     if full_annotated:
         print(f"{ambiguous_count} ambiguous frames.")
         analyze_annotations(pose_dets)
-        pose_dets_fixed = fix_order(pose_dets)
-        with open(dets_out_file, 'w') as f:
-            json.dump(pose_dets_fixed, f)
+        if correct_pose_detections:
+            pose_dets_fixed = fix_order(pose_dets, remove_single_detections=remove_single_detections)
+            with open(dets_out_file, 'w') as f:
+                json.dump(pose_dets_fixed, f)
     else:
         with open(dets_annots_file, 'w') as f:
             json.dump(pose_dets, f)
