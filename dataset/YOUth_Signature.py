@@ -3,6 +3,7 @@ import json
 import os
 from collections import defaultdict
 
+import cv2
 import torch
 import numpy as np
 import pandas as pd
@@ -173,6 +174,7 @@ class YOUth10mSignature(Dataset):
                                 Image.fromarray(joint_hmaps[p * 17 + k, :, :]))
                     joint_hmaps = (heatmaps - np.min(heatmaps)) / (np.max(heatmaps) - np.min(heatmaps))
                 else:
+                    print(f"{self.img_labels_dets.loc[idx, 'crop_path']} - joint_hmaps all zeros")
                     joint_hmaps = np.zeros((34, self.resize[0], self.resize[1]), dtype=np.float32)
             else:
                 joint_hmaps = (joint_hmaps - np.min(joint_hmaps)) / (np.max(joint_hmaps) - np.min(joint_hmaps))
@@ -187,6 +189,7 @@ class YOUth10mSignature(Dataset):
             else:
                 return joint_hmaps, label
         if not self.recalc_joint_hmaps:
+            print(f"WARNING! {joint_hmap_path} does not exist!")
             return np.zeros((34 if not rgb else 37, self.resize[0], self.resize[1]), dtype=np.float32), label
 
         crop = Image.open(crop_path)
@@ -313,6 +316,31 @@ class YOUth10mSignature(Dataset):
         else:
             print(f"WARNING: {depthmaps_path} doesn't exist!")
             return np.zeros((1, self.resize[0], self.resize[1]), dtype=np.float32)
+
+    def get_optical_flow(self, idx, recalc=False):
+        pass
+
+    def calc_optical_flow(self):
+        for index, row in self.img_labels_dets.iterrows():
+            subject, frame, crop_path = row['subject'], row['frame'], row['crop_path']
+        frame1, frame2 = None, None
+        prvs = cv2.cvtColor(frame1, cv2.COLOR_BGR2GRAY)
+        hsv = np.zeros_like(frame1)
+        hsv[..., 1] = 255
+        next = cv2.cvtColor(frame2, cv2.COLOR_BGR2GRAY)
+        flow = cv2.calcOpticalFlowFarneback(prvs, next, None, 0.5, 3, 15, 3, 5, 1.2, 0)
+        mag, ang = cv2.cartToPolar(flow[..., 0], flow[..., 1])
+        hsv[..., 0] = ang * 180 / np.pi / 2
+        hsv[..., 2] = cv2.normalize(mag, None, 0, 255, cv2.NORM_MINMAX)
+        bgr = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
+        cv2.imshow('frame2', bgr)
+        k = cv2.waitKey(30) & 0xff
+        if k == 27:
+            return
+        elif k == ord('s'):
+            cv2.imwrite('opticalfb.png', frame2)
+            cv2.imwrite('opticalhsv.png', bgr)
+        cv2.destroyAllWindows()
 
     def get_label(self, idx):
         onehot = {'42': self.onehot_segmentation(self.img_labels_dets.loc[idx, "seg21_adult"], self.img_labels_dets.loc[idx, "seg21_child"], res=21),
