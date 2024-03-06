@@ -17,7 +17,6 @@ from torch.utils.data.sampler import WeightedRandomSampler
 from utils import Aug, Options, parse_config
 
 
-
 # Images should be cropped around interacting people pairs before using this class.
 class YOUth10mSignature(Dataset):
     def __init__(self, root_dir, camera='cam1', transform=None, target_transform=None, option=Options.jointmaps,
@@ -35,7 +34,7 @@ class YOUth10mSignature(Dataset):
             self.resize = (int(round((1.14285714286 * target_size[0]))),
                            int(round((1.14285714286 * target_size[1]))))  # 224 to 256, 112 to 128 etc.
         else:
-            self.resize = list(target_size)
+            self.resize = tuple(target_size)
         self.target_size = target_size
         self.heatmaps_dir = os.path.join(root_dir, "heatmaps", camera)
         self.gauss_hmaps_dir = os.path.join(root_dir, "gauss_hmaps", camera)
@@ -49,7 +48,7 @@ class YOUth10mSignature(Dataset):
         os.makedirs(self.joint_hmaps_dir, exist_ok=True)
         # img_labels = pd.read_csv("dataset/YOUth_signature_annotations.csv", index_col=0)
         # img_labels = img_labels[img_labels['subject'].str.contains('|'.join(set_subjects))]
-        labels_dets_file = os.path.join(fold_dir, "pose_detections.json")
+        labels_dets_file = os.path.join(fold_dir, "pose_detections_identity_fixed.json")
         img_labels_dets = pd.read_json(labels_dets_file)
         # filter only _set subjects:
         self.img_labels_dets = img_labels_dets[img_labels_dets['crop_path'].str.contains('|'.join(set_subjects))].reset_index(drop=True)
@@ -276,7 +275,7 @@ class YOUth10mSignature(Dataset):
                     plt.show()
             return bodyparts
         elif os.path.exists(bodyparts_base_path + '_0.png'):
-            bodyparts = np.zeros(self.resize + [15], dtype=np.float32)
+            bodyparts = np.zeros(self.resize + (15,), dtype=np.float32)
             for i in range(5):
                 cur_part_path = f"{bodyparts_base_path}_{i}.png"
                 # convert colors into boolean maps per body part channel (+background)
