@@ -36,12 +36,16 @@ class Options:
     jointmaps_rgb_depth = "jointmaps_rgb_depth"
     rgb_bodyparts_depth = "rgb_bodyparts_depth"
     jointmaps_bodyparts_depth = "jointmaps_bodyparts_depth"
+    jointmaps_bodyparts_opticalflow = "jointmaps_bodyparts_opticalflow"
+    jointmaps_rgb_bodyparts_opticalflow = "jointmaps_rgb_bodyparts_opticalflow"
 
     all = {debug: debug, rgb: rgb, bodyparts: bodyparts, depth: depth, jointmaps: jointmaps,
            jointmaps_rgb: jointmaps_rgb, rgb_bodyparts: rgb_bodyparts, jointmaps_bodyparts: jointmaps_bodyparts,
            jointmaps_rgb_bodyparts: jointmaps_rgb_bodyparts, rgb_depth: rgb_depth, jointmaps_depth: jointmaps_depth,
            bodyparts_depth: bodyparts_depth, jointmaps_rgb_depth: jointmaps_rgb_depth,
-           rgb_bodyparts_depth: rgb_bodyparts_depth, jointmaps_bodyparts_depth: jointmaps_bodyparts_depth}
+           rgb_bodyparts_depth: rgb_bodyparts_depth, jointmaps_bodyparts_depth: jointmaps_bodyparts_depth,
+           jointmaps_rgb_bodyparts_opticalflow: jointmaps_rgb_bodyparts_opticalflow,
+           jointmaps_bodyparts_opticalflow: jointmaps_bodyparts_opticalflow}
 
 
 def check_config(cfg):
@@ -75,7 +79,8 @@ def get_experiment_name(cfg, signatures=False):
                       f'{"_Aug-" if len(cfg.AUGMENTATIONS) > 0 else ""}{"-".join(cfg.AUGMENTATIONS)}' \
                       f'{"_multitask" if cfg.MULTITASK else ""}' \
                       f'_lr{cfg.LR}' \
-                      f'_b{cfg.BATCH_SIZE}'
+                      f'_b{cfg.BATCH_SIZE}' \
+                      f'_{cfg.LOSS_WEIGHTS}'
     print("Experiment name:")
     print(experiment_name)
     return experiment_name

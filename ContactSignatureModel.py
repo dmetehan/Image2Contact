@@ -6,11 +6,11 @@ from utils import Options
 
 
 class ContactSignatureModel(nn.Module):
-    def __init__(self, backbone="resnet50", weights="IMAGENET1K_V2", option=Options.debug, copy_rgb_weights=False,
+    def __init__(self, backbone="resnet18", weights="DEFAULT", option=Options.debug, copy_rgb_weights=False,
                  finetune=False):
         super(ContactSignatureModel, self).__init__()
-        resnet50 = torch.hub.load("pytorch/vision", backbone, weights=weights)
-        conv1_pretrained = list(resnet50.children())[0]
+        resnet = torch.hub.load("pytorch/vision", backbone, weights=weights)
+        conv1_pretrained = list(resnet.children())[0]
         if option == Options.rgb:
             self.conv1 = conv1_pretrained
         else:
@@ -19,8 +19,10 @@ class ContactSignatureModel(nn.Module):
                 input_size = 34
             elif option in [Options.jointmaps_rgb]:
                 input_size = 37
-            elif option in [Options.jointmaps_rgb_bodyparts]:
+            elif option in [Options.jointmaps_rgb_bodyparts, Options.jointmaps_bodyparts_opticalflow]:
                 input_size = 52
+            elif option in [Options.jointmaps_rgb_bodyparts_opticalflow]:
+                input_size = 55
             elif option in [Options.bodyparts]:
                 input_size = 15
             elif option in [Options.rgb_bodyparts]:
@@ -33,15 +35,16 @@ class ContactSignatureModel(nn.Module):
                 input_size = 1
             self.conv1 = nn.Conv2d(input_size, 64, kernel_size=7, stride=2, padding=3, bias=False)
         if copy_rgb_weights:
-            if option in [Options.jointmaps_rgb, Options.jointmaps_rgb_bodyparts]:
+            if option in [Options.jointmaps_rgb, Options.jointmaps_rgb_bodyparts, Options.jointmaps_rgb_bodyparts_opticalflow]:
                 self.conv1.weight.data[:, 34:37, :, :] = conv1_pretrained.weight  # copy the weights to the rgb channels
             elif option in [Options.rgb, Options.rgb_bodyparts]:
                 self.conv1.weight.data[:, :3, :, :] = conv1_pretrained.weight  # copies the weights to the rgb channels
-        modules = list(resnet50.children())[1:-1]
-        resnet50 = nn.Sequential(*modules)
+        modules = list(resnet.children())[1:-1]
+        resnet = nn.Sequential(*modules)
+
         if finetune:
             print('Freezing the first convolutional layer!')
-            for name, param in resnet50.named_parameters():
+            for name, param in resnet.named_parameters():
                 if param.requires_grad and ('0.weight' == name or '0.bias' == name
                                             or '3.0.bn1' in name or '3.0.conv1' in name):
                     print(name)
@@ -52,18 +55,20 @@ class ContactSignatureModel(nn.Module):
         #         print(name)
         # print(list(resnet50.named_parameters()))
         # print(resnet50)
-        self.feat_extractor = resnet50
+        #self.feat_extractor = resnet50
+        self.feat_extractor = resnet
         self.thresholds = {'42': 0.3, '12': 0.5, '21*21': 0.1, '6*6': 0.2}
         self.output_keys = list(self.thresholds.keys())
-        self.fc42 = nn.Linear(in_features=2048, out_features=42, bias=True)
-        self.fc12 = nn.Linear(in_features=2048, out_features=12, bias=True)
+        in_features = 2048 if backbone == 'resnet50' else 512
+        self.fc42 = nn.Linear(in_features=in_features, out_features=42, bias=True)
+        self.fc12 = nn.Linear(in_features=in_features, out_features=12, bias=True)
         # self.fc21adult = nn.Linear(in_features=2048, out_features=21, bias=True)
         # self.fc21child = nn.Linear(in_features=2048, out_features=21, bias=True)
         # self.fc6adult = nn.Linear(in_features=2048, out_features=6, bias=True)
         # self.fc6child = nn.Linear(in_features=2048, out_features=6, bias=True)
 
-        self.fc21x21 = nn.Linear(in_features=2048, out_features=21*21, bias=True)
-        self.fc6x6 = nn.Linear(in_features=2048, out_features=6*6, bias=True)
+        self.fc21x21 = nn.Linear(in_features=in_features, out_features=21*21, bias=True)
+        self.fc6x6 = nn.Linear(in_features=in_features, out_features=6*6, bias=True)
 
         # self.fc21adult = nn.Linear(in_features=42, out_features=21, bias=True)
         # self.fc21child = nn.Linear(in_features=42, out_features=21, bias=True)
@@ -102,7 +107,7 @@ def initialize_model(cfg, device, finetune=False):
                                   option=cfg.OPTION, copy_rgb_weights=cfg.COPY_RGB_WEIGHTS, finetune=finetune)
     # MultiLabelSoftMargin loss is also good but needs to be adjusted for dictionary output from the model
     loss_fn = IoUBCELoss()
-    optimizer = optim.AdamW(model.parameters(), lr=cfg.LR, weight_decay=1e-4)
+    optimizer = optim.AdamW(model.parameters(), lr=cfg.LR, weight_decay=1e-5)
     return model, optimizer, loss_fn
 
 

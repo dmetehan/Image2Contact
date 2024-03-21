@@ -15,6 +15,8 @@ import torchvision.transforms.v2 as transforms
 from torchvision.transforms import InterpolationMode
 from torch.utils.data.sampler import WeightedRandomSampler
 
+import sys
+sys.path.append("/mnt/hdd1/GithubRepos/DyadicSignatureDetection")
 from utils import Aug, Options, parse_config
 
 
@@ -24,6 +26,7 @@ class YOUth10mSignature(Dataset):
                  target_size=(224, 224), augment=(), recalc_joint_hmaps=False, bodyparts_dir=None, depthmaps_dir=None,
                  _set=None, train_frac=None, fold=0):
         # Using folds from Pose2Contact
+        self.camera = camera
         pose2contact_dir = '/home/sac/GithubRepos/Pose2Contact/data/youth/signature'
         folds_path = os.path.join(pose2contact_dir, 'all', 'folds.json')
         fold_dir = os.path.join(pose2contact_dir, f'fold{fold}', f'{_set}')
@@ -40,6 +43,7 @@ class YOUth10mSignature(Dataset):
         self.heatmaps_dir = os.path.join(root_dir, "heatmaps", camera)
         self.gauss_hmaps_dir = os.path.join(root_dir, "gauss_hmaps", camera)
         self.joint_hmaps_dir = os.path.join(root_dir, "joint_hmaps", camera)
+        self.opticalflow_dir = os.path.join(root_dir, "optical_flow")
         self.crops_dir = os.path.join(root_dir, "crops")
         if bodyparts_dir:
             self.bodyparts_dir = os.path.join(root_dir, bodyparts_dir)
@@ -298,9 +302,8 @@ class YOUth10mSignature(Dataset):
             return np.zeros((15, self.resize[0], self.resize[1]), dtype=np.float32)
 
     def get_depthmaps(self, idx):
-        depthmaps_path = f"{os.path.join(self.depthmaps_dir, 'cam1', '/'.join(self.img_labels_dets.loc[idx, 'crop_path'].split('/')[-2:])).replace('.jpg', '.png')}"
+        depthmaps_path = f"{os.path.join(self.depthmaps_dir, self.camera, '/'.join(self.img_labels_dets.loc[idx, 'crop_path'].split('/')[-2:])).replace('.jpg', '.png')}"
         if os.path.exists(depthmaps_path):
-            # convert colors into boolean maps per body part channel (+background)
             depthmaps_img = np.asarray(
                 transforms.Resize(self.resize, interpolation=InterpolationMode.NEAREST)(Image.open(depthmaps_path)),
                 dtype=np.uint32)
@@ -317,30 +320,16 @@ class YOUth10mSignature(Dataset):
             print(f"WARNING: {depthmaps_path} doesn't exist!")
             return np.zeros((1, self.resize[0], self.resize[1]), dtype=np.float32)
 
-    def get_optical_flow(self, idx, recalc=False):
-        pass
-
-    def calc_optical_flow(self):
-        for index, row in self.img_labels_dets.iterrows():
-            subject, frame, crop_path = row['subject'], row['frame'], row['crop_path']
-        frame1, frame2 = None, None
-        prvs = cv2.cvtColor(frame1, cv2.COLOR_BGR2GRAY)
-        hsv = np.zeros_like(frame1)
-        hsv[..., 1] = 255
-        next = cv2.cvtColor(frame2, cv2.COLOR_BGR2GRAY)
-        flow = cv2.calcOpticalFlowFarneback(prvs, next, None, 0.5, 3, 15, 3, 5, 1.2, 0)
-        mag, ang = cv2.cartToPolar(flow[..., 0], flow[..., 1])
-        hsv[..., 0] = ang * 180 / np.pi / 2
-        hsv[..., 2] = cv2.normalize(mag, None, 0, 255, cv2.NORM_MINMAX)
-        bgr = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
-        cv2.imshow('frame2', bgr)
-        k = cv2.waitKey(30) & 0xff
-        if k == 27:
-            return
-        elif k == ord('s'):
-            cv2.imwrite('opticalfb.png', frame2)
-            cv2.imwrite('opticalhsv.png', bgr)
-        cv2.destroyAllWindows()
+    def get_optical_flow(self, idx):
+        subject, frame = self.img_labels_dets.loc[idx, 'crop_path'].split('/')[-2:]
+        optical_flow_path = os.path.join(self.opticalflow_dir, subject, frame.replace('.jpg', '.png'))
+        if not os.path.exists(optical_flow_path):
+            print(f"WARNING: {optical_flow_path} doesn't exist!")
+            return np.zeros((3, self.resize[0], self.resize[1]), dtype=np.float32)
+        optical_flow = np.asarray(
+            transforms.Resize(self.resize, interpolation=InterpolationMode.NEAREST)(Image.open(optical_flow_path)),
+            dtype=np.uint32)
+        return np.transpose(np.asarray(optical_flow, dtype=np.float32), (2, 0, 1))  # reorder dimensions
 
     def get_label(self, idx):
         onehot = {'42': self.onehot_segmentation(self.img_labels_dets.loc[idx, "seg21_adult"], self.img_labels_dets.loc[idx, "seg21_child"], res=21),
@@ -414,6 +403,16 @@ class YOUth10mSignature(Dataset):
             bodyparts = self.get_bodyparts(idx)
             depthmaps = self.get_depthmaps(idx)
             data = np.vstack((data, bodyparts, depthmaps))
+        elif self.option == Options.jointmaps_rgb_bodyparts_opticalflow:
+            data, label = self.get_joint_hmaps(idx, rgb=True)
+            bodyparts = self.get_bodyparts(idx)
+            optical_flow = self.get_optical_flow(idx)
+            data = np.vstack((data, bodyparts, optical_flow))
+        elif self.option == Options.jointmaps_bodyparts_opticalflow:
+            data, label = self.get_joint_hmaps(idx, rgb=False)
+            bodyparts = self.get_bodyparts(idx)
+            optical_flow = self.get_optical_flow(idx)
+            data = np.vstack((data, bodyparts, optical_flow))
         else:
             raise NotImplementedError()
 

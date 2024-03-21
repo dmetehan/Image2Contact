@@ -38,7 +38,7 @@ class EarlyStopping:
                 self.early_stop = True
 
 
-def train_one_epoch(model, optimizer, loss_fn, train_loader, epoch_index, tb_writer, batch_size, multitask=True):
+def train_one_epoch(model, optimizer, loss_fn, loss_weights, train_loader, epoch_index, tb_writer, batch_size, multitask=True):
     overall_loss = 0.
     running_loss = 0.
     last_loss = 0.
@@ -68,9 +68,8 @@ def train_one_epoch(model, optimizer, loss_fn, train_loader, epoch_index, tb_wri
             preds[preds < model.thresholds[key]] = 0
             all_preds[key][i, :, :len(labels[key])] = preds
             # Compute the loss and its gradients
-            if key == '21*21':
-                loss += loss_fn(outputs_list[k], labels[key].float())
-                # print(key, loss)
+            loss += loss_weights[key] * loss_fn(outputs_list[k], labels[key].float())
+            #print(key, loss)
         loss.backward()
 
         # Adjust learning weights
@@ -104,7 +103,9 @@ def train_one_epoch(model, optimizer, loss_fn, train_loader, epoch_index, tb_wri
 def train_model(model, optimizer, scheduler, loss_fn_train, experiment_name, cfg, train_loader, val_loader,
                 exp_dir="YOUth", start_epoch=0, resume=False):
     multitask = cfg.MULTITASK
-    loss_fn_valid = nn.BCEWithLogitsLoss()  # using IOU as loss for validation doesn't work
+    loss_weights = {key: cfg.LOSS_WEIGHTS[k]  for k, key in enumerate(model.output_keys)}
+    #loss_fn_valid = nn.BCEWithLogitsLoss()  # using IOU as loss for validation doesn't work
+    loss_fn_valid = loss_fn_train
     early_stopping = EarlyStopping(tolerance=5, min_delta=10)
     best_model_path = ''
     if resume:
@@ -129,7 +130,7 @@ def train_model(model, optimizer, scheduler, loss_fn_train, experiment_name, cfg
 
         # Make sure gradient tracking is on, and do a pass over the data
         model.train(True)
-        avg_loss, jaccard = train_one_epoch(model, optimizer, loss_fn_train, train_loader, epoch, writer, cfg.BATCH_SIZE)
+        avg_loss, jaccard = train_one_epoch(model, optimizer, loss_fn_train, loss_weights, train_loader, epoch, writer, cfg.BATCH_SIZE)
 
         # We don't need gradients on to do reporting
         model.train(False)
@@ -153,8 +154,7 @@ def train_model(model, optimizer, scheduler, loss_fn_train, experiment_name, cfg
                     vpreds[vpreds >= model.thresholds[key]] = 1
                     vpreds[vpreds < model.thresholds[key]] = 0
                     all_preds[key][i, :, :len(vlabels[key])] = vpreds
-                    if key == '21*21':
-                        vloss += loss_fn_valid(voutputs_list[k], vlabels[key].float())
+                    vloss += loss_weights[key] * loss_fn_valid(voutputs_list[k], vlabels[key].float())
                 running_vloss += vloss.detach().item()
 
         vjaccard = {}
