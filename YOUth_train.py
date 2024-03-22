@@ -18,7 +18,7 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print(f"Working on {device}")
-ContactSignatureModel(backbone="resnet50")
+ContactSignatureModel(backbone="resnet50", weights="DEFAULT")
 # net should be initialized here before importing torchvision
 from dataset.YOUth_Signature import init_datasets_with_cfg
 

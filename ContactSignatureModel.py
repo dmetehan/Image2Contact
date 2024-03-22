@@ -1,14 +1,16 @@
 import torch
 from torch import nn, optim
 
+from torch.nn import MultiLabelSoftMarginLoss
 from models.custom_loss import IoUBCELoss
 from utils import Options
 
 
 class ContactSignatureModel(nn.Module):
-    def __init__(self, backbone="resnet34", weights="DEFAULT", option=Options.debug, copy_rgb_weights=False,
+    def __init__(self, backbone, weights, option=Options.debug, copy_rgb_weights=False,
                  finetune=False):
         super(ContactSignatureModel, self).__init__()
+        print(backbone)
         resnet = torch.hub.load("pytorch/vision", backbone, weights=weights)
         conv1_pretrained = list(resnet.children())[0]
         if option == Options.rgb:
@@ -103,10 +105,10 @@ class ContactSignatureModel(nn.Module):
 
 
 def initialize_model(cfg, device, finetune=False):
-    model = ContactSignatureModel(backbone="resnet50", weights="IMAGENET1K_V2" if cfg.PRETRAINED else None,
-                                  option=cfg.OPTION, copy_rgb_weights=cfg.COPY_RGB_WEIGHTS, finetune=finetune)
+    model = ContactSignatureModel(backbone=cfg.BACKBONE, weights="DEFAULT", option=cfg.OPTION, copy_rgb_weights=cfg.COPY_RGB_WEIGHTS, finetune=finetune)
     # MultiLabelSoftMargin loss is also good but needs to be adjusted for dictionary output from the model
-    loss_fn = IoUBCELoss()
+    # loss_fn = IoUBCELoss()
+    loss_fn = MultiLabelSoftMarginLoss()
     optimizer = optim.AdamW(model.parameters(), lr=cfg.LR, weight_decay=1e-5)
     return model, optimizer, loss_fn
 
