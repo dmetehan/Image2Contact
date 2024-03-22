@@ -6,7 +6,7 @@ from utils import Options
 
 
 class ContactSignatureModel(nn.Module):
-    def __init__(self, backbone="resnet18", weights="DEFAULT", option=Options.debug, copy_rgb_weights=False,
+    def __init__(self, backbone="resnet34", weights="DEFAULT", option=Options.debug, copy_rgb_weights=False,
                  finetune=False):
         super(ContactSignatureModel, self).__init__()
         resnet = torch.hub.load("pytorch/vision", backbone, weights=weights)
