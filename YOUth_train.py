@@ -10,7 +10,7 @@ from sklearn.metrics import accuracy_score, f1_score, jaccard_score
 
 from argparse import ArgumentParser
 from ContactSignatureModel import ContactSignatureModel, initialize_model
-from utils import parse_config, get_experiment_name, find_last_values_tensorboard
+from utils import parse_config, get_experiment_name, find_last_values_tensorboard, vis_pred_errors_heatmap, vis_threshold_eval
 
 # this is important for FLickrCI3DClassification. It doesn't allow importing v2 after initializing the network.
 import torchvision.transforms.v2 as transforms
@@ -38,7 +38,7 @@ class EarlyStopping:
                 self.early_stop = True
 
 
-def train_one_epoch(model, optimizer, loss_fn, loss_weights, train_loader, epoch_index, tb_writer, batch_size, multitask=True):
+def train_one_epoch(model, optimizer, loss_fn, loss_weights, train_loader, epoch_index, tb_writer, batch_size, save_dir, multitask=True):
     overall_loss = 0.
     running_loss = 0.
     last_loss = 0.
@@ -47,14 +47,16 @@ def train_one_epoch(model, optimizer, loss_fn, loss_weights, train_loader, epoch
     # iter(training_loader) so that we can track the batch
     # index and do some intra-epoch reporting
     i = 0
-    all_preds = {key: np.zeros((len(train_loader.dataset), eval(key), batch_size)) for key in model.output_keys}
-    all_labels = {key: np.zeros((len(train_loader.dataset), eval(key), batch_size)) for key in model.output_keys}
+    pred_scores = {key: [] for key in model.output_keys}
+    all_labels = {key: [] for key in model.output_keys}
+    all_preds = {key: [] for key in model.output_keys}
     for i, data in enumerate(train_loader):
         # Every data instance is an input + label pair
         _, inputs, labels = data
         for key in all_labels:
-            all_labels[key][i, :, :len(labels[key])] = labels[key].T
             labels[key] = labels[key].to(device)
+            all_labels[key] += labels[key].detach().cpu().tolist()
+
         inputs = inputs.to(device)
         # Zero your gradients for every batch!
         optimizer.zero_grad()
@@ -63,10 +65,8 @@ def train_one_epoch(model, optimizer, loss_fn, loss_weights, train_loader, epoch
         outputs_list = model(inputs)
         loss = torch.zeros(1).to(device)
         for k, key in enumerate(labels):
-            preds = outputs_list[k].T.detach().cpu()
-            preds[preds >= model.thresholds[key]] = 1
-            preds[preds < model.thresholds[key]] = 0
-            all_preds[key][i, :, :len(labels[key])] = preds
+            pred_scores[key] += outputs_list[k].detach().cpu().tolist()
+            all_preds[key] += (torch.sigmoid(outputs_list[k].detach().cpu()) > model.thresholds[key]).long().tolist()
             # Compute the loss and its gradients
             loss += loss_weights[key] * loss_fn(outputs_list[k], labels[key].float())
             #print(key, loss)
@@ -87,9 +87,10 @@ def train_one_epoch(model, optimizer, loss_fn, loss_weights, train_loader, epoch
             running_loss = 0.
     jaccard = {}
     for key in all_labels:
-        all_preds[key] = np.swapaxes(all_preds[key], 1, 2).reshape(-1, eval(key))[:-(batch_size - len(labels[key])), :]
-        all_labels[key] = np.swapaxes(all_labels[key], 1, 2).reshape(-1, eval(key))[:-(batch_size - len(labels[key])), :]
         jaccard[key] = jaccard_score(all_labels[key], all_preds[key], average='micro', zero_division=0)
+    # Visualize thresholding graphs
+    kwargs = {'epoch': epoch_index, 'save_dir': os.path.join(save_dir, 'thresholding', 'train'), 'average': 'micro'}
+    vis_threshold_eval(all_labels, pred_scores, jaccard_score, **kwargs)
     # acc = accuracy_score(all_labels, all_preds)
     # f1 = f1_score(all_labels, all_preds, average="micro")
     if i % 1000 != 999:
@@ -123,45 +124,45 @@ def train_model(model, optimizer, scheduler, loss_fn_train, experiment_name, cfg
         best_vloss = 1_000_000.
         best_vacc_blncd = 0.0
     writer = SummaryWriter('{}/{}_{}'.format(exp_dir, experiment_name, timestamp))
-
+    save_dir = os.path.join(exp_dir, experiment_name, timestamp)
     model = model.to(device)
     for epoch in range(start_epoch, cfg.EPOCHS):
         print('EPOCH {}:'.format(epoch + 1))
 
         # Make sure gradient tracking is on, and do a pass over the data
         model.train(True)
-        avg_loss, jaccard = train_one_epoch(model, optimizer, loss_fn_train, loss_weights, train_loader, epoch, writer, cfg.BATCH_SIZE)
+        avg_loss, jaccard = train_one_epoch(model, optimizer, loss_fn_train, loss_weights, train_loader, epoch, writer, cfg.BATCH_SIZE, save_dir)
 
         # We don't need gradients on to do reporting
         model.train(False)
 
         running_vloss = 0.0
         i = 0
-        all_preds = {key: np.zeros((len(val_loader.dataset), eval(key), cfg.BATCH_SIZE)) for key in model.output_keys}
-        all_labels = {key: np.zeros((len(val_loader.dataset), eval(key), cfg.BATCH_SIZE)) for key in model.output_keys}
+        pred_scores = {key: [] for key in model.output_keys}
+        all_labels = {key: [] for key in model.output_keys}
+        all_preds = {key: [] for key in model.output_keys}
         with torch.no_grad():
             for i, vdata in enumerate(val_loader):
                 _, vinputs, vlabels = vdata
                 for key in all_labels:
-                    all_labels[key][i, :, :len(vlabels[key])] = vlabels[key].T
                     vlabels[key] = vlabels[key].to(device)
+                    all_labels[key] += vlabels[key].detach().cpu().tolist()
                 vinputs = vinputs.to(device)
 
                 vloss = torch.zeros(1).to(device)
                 voutputs_list = model(vinputs)
                 for k, key in enumerate(vlabels):
-                    vpreds = voutputs_list[k].T.detach().cpu()
-                    vpreds[vpreds >= model.thresholds[key]] = 1
-                    vpreds[vpreds < model.thresholds[key]] = 0
-                    all_preds[key][i, :, :len(vlabels[key])] = vpreds
+                    pred_scores[key] += voutputs_list[k].detach().cpu().tolist()
+                    all_preds[key] += (torch.sigmoid(voutputs_list[k].detach().cpu()) > model.thresholds[key]).long().tolist()
+                    # Compute the loss and its gradients
                     vloss += loss_weights[key] * loss_fn_valid(voutputs_list[k], vlabels[key].float())
                 running_vloss += vloss.detach().item()
 
         vjaccard = {}
         for key in all_labels:
-            all_preds[key] = np.swapaxes(all_preds[key], 1, 2).reshape(-1, eval(key))[:-(cfg.BATCH_SIZE - len(vlabels[key])), :]
-            all_labels[key] = np.swapaxes(all_labels[key], 1, 2).reshape(-1, eval(key))[:-(cfg.BATCH_SIZE - len(vlabels[key])), :]
             vjaccard[key] = jaccard_score(all_labels[key], all_preds[key], average='micro', zero_division=0)
+        kwargs = {'epoch': epoch, 'save_dir': os.path.join(save_dir, 'thresholding', 'val'), 'average': 'micro'}
+        vis_threshold_eval(all_labels, pred_scores, jaccard_score, **kwargs)
         avg_vloss = running_vloss / (i + 1)
         scheduler.step(avg_vloss)
         print('LOSS train {:.4f} valid {:.4f} - Jaccard train {} valid {}'.format(avg_loss,
