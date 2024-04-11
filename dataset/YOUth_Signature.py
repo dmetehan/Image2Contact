@@ -468,11 +468,11 @@ class YOUth10mSignature(Dataset):
         return data
 
 
-def init_datasets_with_cfg(root_dir, _, cfg):
+def init_datasets_with_cfg(root_dir, _, cfg, fold=0):
     return init_datasets(root_dir, root_dir, cfg.BATCH_SIZE, option=cfg.OPTION,
                          target_size=cfg.TARGET_SIZE, num_workers=8,
                          augment=cfg.AUGMENTATIONS, bodyparts_dir=cfg.BODYPARTS_DIR, depthmaps_dir=cfg.DEPTHMAPS_DIR,
-                         train_frac=cfg.TRAIN_FRAC if hasattr(cfg, 'TRAIN_FRAC') else None)
+                         fold=fold)
 
 
 def init_datasets_with_cfg_dict(root_dir, _, config_dict):
@@ -482,14 +482,14 @@ def init_datasets_with_cfg_dict(root_dir, _, config_dict):
 
 
 def init_datasets(root_dir, _, batch_size, option=Options.jointmaps, target_size=(224, 224), num_workers=2, augment=(),
-                  bodyparts_dir=None, depthmaps_dir=None, train_frac=None):
+                  bodyparts_dir=None, depthmaps_dir=None, fold=0):
     train_dataset = YOUth10mSignature(root_dir, option=option, target_size=target_size, augment=augment,
                                       bodyparts_dir=bodyparts_dir, depthmaps_dir=depthmaps_dir, _set='train',
-                                      train_frac=train_frac)
+                                      fold=fold)
     val_dataset = YOUth10mSignature(root_dir, option=option, target_size=target_size, augment=augment,
-                                    bodyparts_dir=bodyparts_dir, depthmaps_dir=depthmaps_dir, _set='val')
+                                    bodyparts_dir=bodyparts_dir, depthmaps_dir=depthmaps_dir, _set='val', fold=fold)
     test_dataset = YOUth10mSignature(root_dir, option=option, target_size=target_size, augment=augment,
-                                     bodyparts_dir=bodyparts_dir, depthmaps_dir=depthmaps_dir, _set='test')
+                                     bodyparts_dir=bodyparts_dir, depthmaps_dir=depthmaps_dir, _set='test', fold=fold)
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True,
                                                num_workers=num_workers)
     validation_loader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size, shuffle=False,

@@ -109,6 +109,7 @@ def train_model(model, optimizer, scheduler, loss_fn_train, experiment_name, cfg
     loss_fn_valid = loss_fn_train
     early_stopping = EarlyStopping(tolerance=5, min_delta=10)
     best_model_path = ''
+    best_validation_scores = {'6*6': {'6*6': 0}, '21*21': {'21*21': 0}}
     if resume:
         timestamps = ['_'.join(folder_name.split('_')[-2:]) for folder_name in sorted(os.listdir(exp_dir))
                       if (experiment_name in folder_name) and os.path.isdir(os.path.join(exp_dir, folder_name))]
@@ -184,6 +185,9 @@ def train_model(model, optimizer, scheduler, loss_fn_train, experiment_name, cfg
             model_path = '{}/{}_{}_{}'.format(exp_dir, experiment_name, timestamp, epoch + 1)
             torch.save(model.state_dict(), model_path)
             best_model_path = model_path
+        for key in best_validation_scores:
+            if best_validation_scores[key][key] < vjaccard[key]:
+                best_validation_scores[key] = vjaccard.copy()
         # if vacc_blncd > best_vacc_blncd:
         #     best_vacc_blncd = vacc_blncd
         #     model_path = '{}/{}_{}_{}'.format(exp_dir, experiment_name, timestamp, epoch + 1)
@@ -197,7 +201,7 @@ def train_model(model, optimizer, scheduler, loss_fn_train, experiment_name, cfg
 
     print('Finished Training')
     print(f'Best model is saved at: {best_model_path}')
-    return best_model_path
+    return best_model_path, best_validation_scores
 
 
 def main():
@@ -205,12 +209,13 @@ def main():
     parser.add_argument('dataset_dir', help='dataset directory path')
     parser.add_argument('config_file', help='config file')
     parser.add_argument('exp_dir', help='experiment directory')
+    parser.add_argument('fold', type=int, default=0, help='fold index [0, 4]')
     parser.add_argument('--resume', action='store_true', default=False, help='False: start from scratch, ')
     parser.add_argument('--test', action='store_true', default=False, help='False: no testing'
                                                                            'True: testing on the test set at the end')
     parser.add_argument('--log_test_results', action='store_true', default=False, help='False: no logging'
                                                                                        'True: logging test results')
-
+    parser.add_argument('--log_val_results', action='store_true', default=False, help='logging val results')
     args = parser.parse_args()
     if not os.path.exists(args.config_file):
         raise FileNotFoundError(f"{args.config_file} could not be found!")
@@ -235,11 +240,14 @@ def main():
         models.sort(key=lambda x: x[1])
         model_name, start_epoch = models[-1]
         model.load_state_dict(torch.load(f"{exp_dir}/{model_name}"))
-    train_loader, validation_loader, test_loader = init_datasets_with_cfg(root_dir_ssd, root_dir_ssd, cfg)
+    train_loader, validation_loader, test_loader = init_datasets_with_cfg(root_dir_ssd, root_dir_ssd, cfg, fold=args.fold)
     print(f'Training size: {len(train_loader.dataset)}, Validation size: {len(validation_loader.dataset)}, '
           f'Test size: {len(test_loader.dataset)}')
-    best_model_path = train_model(model, optimizer, scheduler, loss_fn, experiment_name, cfg, train_loader,
-                                  validation_loader, exp_dir=exp_dir, start_epoch=start_epoch, resume=args.resume)
+    best_model_path, best_validation_scores = train_model(model, optimizer, scheduler, loss_fn, experiment_name, cfg, train_loader,
+                                                          validation_loader, exp_dir=exp_dir, start_epoch=start_epoch, resume=args.resume)
+    if args.log_val_results:
+        with open("val_results.txt", "a+") as f:
+            f.write(f"{best_validation_scores}, {cfg.LOSS_WEIGHTS}, {args.fold}\n")
     if args.test:
         from test import test_model
         model.load_state_dict(torch.load(best_model_path))
