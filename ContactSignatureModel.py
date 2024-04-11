@@ -106,7 +106,6 @@ class ContactSignatureModel(nn.Module):
 
 def initialize_model(cfg, device, finetune=False):
     model = ContactSignatureModel(backbone=cfg.BACKBONE, weights="DEFAULT", option=cfg.OPTION, copy_rgb_weights=cfg.COPY_RGB_WEIGHTS, finetune=finetune)
-    # MultiLabelSoftMargin loss is also good but needs to be adjusted for dictionary output from the model
     # loss_fn = IoUBCELoss()
     loss_fn = MultiLabelSoftMarginLoss()
     optimizer = optim.AdamW(model.parameters(), lr=cfg.LR, weight_decay=1e-5)

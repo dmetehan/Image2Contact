@@ -9,5 +9,5 @@ for i in range(1, 6):
                f'configs/loss_weights/lw{i}_config.yaml', 'exp/YOUth_cross', f'{fold}', '--log_val_results']
         print(cmd)
         subprocess.Popen(cmd).wait()
-        time.sleep(10) # Sleep for 10 seconds
+        time.sleep(10)  # Sleep for 10 seconds
 
