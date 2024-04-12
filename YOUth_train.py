@@ -69,7 +69,7 @@ def train_one_epoch(model, optimizer, loss_fn, loss_weights, train_loader, epoch
             all_preds[key] += (torch.sigmoid(outputs_list[k].detach().cpu()) > model.thresholds[key]).long().tolist()
             # Compute the loss and its gradients
             loss += loss_weights[key] * loss_fn(outputs_list[k], labels[key].float())
-            #print(key, loss)
+            # print(key, loss)
         loss.backward()
 
         # Adjust learning weights
@@ -104,8 +104,8 @@ def train_one_epoch(model, optimizer, loss_fn, loss_weights, train_loader, epoch
 def train_model(model, optimizer, scheduler, loss_fn_train, experiment_name, cfg, train_loader, val_loader,
                 exp_dir="YOUth", start_epoch=0, resume=False):
     multitask = cfg.MULTITASK
-    loss_weights = {key: cfg.LOSS_WEIGHTS[k]  for k, key in enumerate(model.output_keys)}
-    #loss_fn_valid = nn.BCEWithLogitsLoss()  # using IOU as loss for validation doesn't work
+    loss_weights = {key: cfg.LOSS_WEIGHTS[k] for k, key in enumerate(model.output_keys)}
+    # loss_fn_valid = nn.BCEWithLogitsLoss()  # using IOU as loss for validation doesn't work
     loss_fn_valid = loss_fn_train
     early_stopping = EarlyStopping(tolerance=5, min_delta=10)
     best_model_path = ''

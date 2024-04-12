@@ -59,7 +59,7 @@ class ContactSignatureModel(nn.Module):
         # print(resnet50)
         #self.feat_extractor = resnet50
         self.feat_extractor = resnet
-        self.thresholds = {'42': 0.3, '12': 0.5, '21*21': 0.1, '6*6': 0.2}
+        self.thresholds = {'42': 0.2, '12': 0.25, '21*21': 0.0625, '6*6': 0.125}
         self.output_keys = list(self.thresholds.keys())
         in_features = 2048 if backbone == 'resnet50' else 512
         self.fc42 = nn.Linear(in_features=in_features, out_features=42, bias=True)
@@ -105,10 +105,11 @@ class ContactSignatureModel(nn.Module):
 
 
 def initialize_model(cfg, device, finetune=False):
-    model = ContactSignatureModel(backbone=cfg.BACKBONE, weights="DEFAULT", option=cfg.OPTION, copy_rgb_weights=cfg.COPY_RGB_WEIGHTS, finetune=finetune)
+    model = ContactSignatureModel(backbone=cfg.BACKBONE, weights="DEFAULT", option=cfg.OPTION,
+                                  copy_rgb_weights=cfg.COPY_RGB_WEIGHTS, finetune=finetune)
     # loss_fn = IoUBCELoss()
     loss_fn = MultiLabelSoftMarginLoss()
-    optimizer = optim.AdamW(model.parameters(), lr=cfg.LR, weight_decay=1e-5)
+    optimizer = optim.AdamW(model.parameters(), betas=[0.9, 0.99], lr=cfg.LR, weight_decay=0.0002)
     return model, optimizer, loss_fn
 
 

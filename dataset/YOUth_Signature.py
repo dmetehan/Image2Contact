@@ -416,18 +416,12 @@ class YOUth10mSignature(Dataset):
         else:
             raise NotImplementedError()
 
-        data = self.do_augmentations(data, augment)
+        data, label = self.do_augmentations(data, label, augment)
         return idx, data, label
 
-    def do_augmentations(self, data, augment):
+    def do_augmentations(self, data, label, augment):
         for aug in augment:
-            if aug == Aug.swap:
-                print("WARNING! Swapping is not recommended when bounding box heuristic is used to correct the order")
-                if self.option in [Options.jointmaps_rgb, Options.jointmaps, Options.jointmaps_rgb_bodyparts,
-                                   Options.jointmaps_bodyparts, Options.jointmaps_bodyparts_depth]:
-                    if np.random.randint(2) == 0:  # 50% chance to swap
-                        data[:17, :, :], data[17:34, :, :] = data[17:34, :, :], data[:17, :, :]
-            elif aug == Aug.hflip:
+            if aug == Aug.hflip:
                 if np.random.randint(2) == 0:  # 50% chance to flip
                     # swap channels of left/right pairs of pose channels
                     if self.option in [Options.jointmaps_rgb, Options.jointmaps, Options.jointmaps_rgb_bodyparts,
@@ -449,6 +443,7 @@ class YOUth10mSignature(Dataset):
                         for i, j in self.flip_pairs_bodyparts:
                             data[i, :, :], data[j, :, :] = data[j, :, :], data[i, :, :]
                     data[:, :, :] = data[:, :, ::-1]  # flip everything horizontally
+                    # TODO: WE NEED TO UPDATE label with hflip as well!
             elif aug == Aug.crop:
                 i = torch.randint(0, self.resize[0] - self.target_size[0] + 1, size=(1,)).item()
                 j = torch.randint(0, self.resize[1] - self.target_size[1] + 1, size=(1,)).item()
@@ -465,7 +460,7 @@ class YOUth10mSignature(Dataset):
                                                                                               (1, 2, 0)).astype(
                         np.uint8))),
                                                   (2, 0, 1)).astype(np.float32) / 255
-        return data
+        return data, label
 
 
 def init_datasets_with_cfg(root_dir, _, cfg, fold=0):
