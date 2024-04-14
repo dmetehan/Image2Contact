@@ -331,27 +331,40 @@ class YOUth10mSignature(Dataset):
             dtype=np.uint32)
         return np.transpose(np.asarray(optical_flow, dtype=np.float32), (2, 0, 1))  # reorder dimensions
 
-    def get_label(self, idx):
-        onehot = {'42': self.onehot_segmentation(self.img_labels_dets.loc[idx, "seg21_adult"], self.img_labels_dets.loc[idx, "seg21_child"], res=21),
-                  '12': self.onehot_segmentation(self.img_labels_dets.loc[idx, "seg6_adult"], self.img_labels_dets.loc[idx, "seg6_child"], res=6),
-                  '21*21': self.onehot_sig(self.img_labels_dets.loc[idx, "signature21x21"], res=21),
-                  '6*6': self.onehot_sig(self.img_labels_dets.loc[idx, "signature6x6"], res=6)}
+    def get_label(self, idx, swap=False):
+        onehot = {'42': self.onehot_segmentation(self.img_labels_dets.loc[idx, "seg21_adult"], self.img_labels_dets.loc[idx, "seg21_child"], res=21, swap=swap),
+                  '12': self.onehot_segmentation(self.img_labels_dets.loc[idx, "seg6_adult"], self.img_labels_dets.loc[idx, "seg6_child"], res=6, swap=swap),
+                  '21*21': self.onehot_sig(self.img_labels_dets.loc[idx, "signature21x21"], res=21, swap=swap),
+                  '6*6': self.onehot_sig(self.img_labels_dets.loc[idx, "signature6x6"], res=6, swap=swap)}
         return onehot
 
     @staticmethod
-    def onehot_segmentation(adult_seg, child_seg, res=21):
+    def onehot_segmentation(adult_seg, child_seg, res=21, swap=False):
+        to_be_swapped = {21: {9: 10, 10: 9, 11: 12, 12: 11, 13: 14, 14: 13, 15: 16, 16: 15, 17: 18, 18: 17, 19: 20, 20: 19},
+                         6: {2: 3, 3: 2, 4: 5, 5: 4}}
         mat = torch.zeros(res + res, dtype=torch.int8)
         for adult in adult_seg:
-            mat[adult] = 1
+            if swap:
+                mat[to_be_swapped[res][adult]] = 1
+            else:
+                mat[adult] = 1
         for child in child_seg:
-            mat[res + child] = 1
+            if swap:
+                mat[res + to_be_swapped[res][child]] = 1
+            else:
+                mat[res + child] = 1
         return mat.flatten()
 
     @staticmethod
-    def onehot_sig(signature, res=21):
+    def onehot_sig(signature, res=21, swap=False):
+        to_be_swapped = {21: {9: 10, 10: 9, 11: 12, 12: 11, 13: 14, 14: 13, 15: 16, 16: 15, 17: 18, 18: 17, 19: 20, 20: 19},
+                         6: {2: 3, 3: 2, 4: 5, 5: 4}}
         mat = torch.zeros(res, res, dtype=torch.int8)
         for adult, child in signature:
-            mat[adult, child] = 1
+            if swap:
+                mat[to_be_swapped[res][adult], to_be_swapped[res][child]] = 1
+            else:
+                mat[adult, child] = 1
         return mat.flatten()
 
     @staticmethod
@@ -416,10 +429,10 @@ class YOUth10mSignature(Dataset):
         else:
             raise NotImplementedError()
 
-        data, label = self.do_augmentations(data, label, augment)
+        data, label = self.do_augmentations(data, label, idx, augment)
         return idx, data, label
 
-    def do_augmentations(self, data, label, augment):
+    def do_augmentations(self, data, label, idx, augment):
         for aug in augment:
             if aug == Aug.hflip:
                 if np.random.randint(2) == 0:  # 50% chance to flip
@@ -443,7 +456,7 @@ class YOUth10mSignature(Dataset):
                         for i, j in self.flip_pairs_bodyparts:
                             data[i, :, :], data[j, :, :] = data[j, :, :], data[i, :, :]
                     data[:, :, :] = data[:, :, ::-1]  # flip everything horizontally
-                    # TODO: WE NEED TO UPDATE label with hflip as well!
+                    label = self.get_label(idx, swap=True)  # Updates the label with hflip as well!
             elif aug == Aug.crop:
                 i = torch.randint(0, self.resize[0] - self.target_size[0] + 1, size=(1,)).item()
                 j = torch.randint(0, self.resize[1] - self.target_size[1] + 1, size=(1,)).item()
