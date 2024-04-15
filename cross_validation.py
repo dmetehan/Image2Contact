@@ -59,6 +59,6 @@ def read_results(path):
 
 
 if __name__ == '__main__':
-    # run_cross_val()
-    results = read_results("val_results.txt")
-    analyze_results(results)
+    run_cross_val()
+    # results = read_results("val_results.txt")
+    # analyze_results(results)

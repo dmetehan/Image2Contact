@@ -345,14 +345,14 @@ class YOUth10mSignature(Dataset):
         mat = torch.zeros(res + res, dtype=torch.int8)
         for adult in adult_seg:
             if swap:
-                mat[to_be_swapped[res][adult]] = 1
-            else:
-                mat[adult] = 1
+                if adult in to_be_swapped[res]:
+                    adult = to_be_swapped[res][adult]
+            mat[adult] = 1
         for child in child_seg:
             if swap:
-                mat[res + to_be_swapped[res][child]] = 1
-            else:
-                mat[res + child] = 1
+                if child in to_be_swapped[res]:
+                    child = to_be_swapped[res][child]
+            mat[res + child] = 1
         return mat.flatten()
 
     @staticmethod
@@ -362,9 +362,11 @@ class YOUth10mSignature(Dataset):
         mat = torch.zeros(res, res, dtype=torch.int8)
         for adult, child in signature:
             if swap:
-                mat[to_be_swapped[res][adult], to_be_swapped[res][child]] = 1
-            else:
-                mat[adult, child] = 1
+                if adult in to_be_swapped[res]:
+                    adult = to_be_swapped[res][adult]
+                if child in to_be_swapped[res]:
+                    child = to_be_swapped[res][child]
+            mat[adult, child] = 1
         return mat.flatten()
 
     @staticmethod

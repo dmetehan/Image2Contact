@@ -1,5 +1,5 @@
 OPTION: "jointmaps_bodyparts"
-BACKBONE: "resnet50"
+BACKBONE: "resnet18"
 PRETRAINED: False
 COPY_RGB_WEIGHTS: False
 TARGET_SIZE: [112, 112]
