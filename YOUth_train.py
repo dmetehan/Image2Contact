@@ -247,7 +247,7 @@ def main():
                                                           validation_loader, exp_dir=exp_dir, start_epoch=start_epoch, resume=args.resume)
     if args.log_val_results:
         with open("val_results.txt", "a+") as f:
-            f.write(f"{best_validation_scores}, {cfg.LOSS_WEIGHTS}, {args.fold}\n")
+            f.write(f"{best_validation_scores}, {cfg.LOSS_WEIGHTS}, {cfg.OPTION}, {args.fold}\n")
     if args.test:
         from test import test_model
         model.load_state_dict(torch.load(best_model_path))

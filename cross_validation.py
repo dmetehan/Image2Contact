@@ -4,11 +4,21 @@ import subprocess
 import numpy as np
 
 
-def run_cross_val():
+def run_cross_val_loss():
     for i in range(6):
         for fold in range(1, 5):
             cmd = ['venv/bin/python', 'YOUth_train.py', '/home/sac/GithubRepos/ContactClassification-ssd/YOUth10mSignatures/',
                    f'configs/loss_weights/lw{i}_config.yaml', 'exp/YOUth_cross', f'{fold}', '--log_val_results']
+            print(cmd)
+            subprocess.Popen(cmd).wait()
+            time.sleep(10)  # Sleep for 10 seconds
+
+
+def run_cross_val_modality():
+    for i in range(5):
+        for fold in range(1, 5):
+            cmd = ['venv/bin/python', 'YOUth_train.py', '/home/sac/GithubRepos/ContactClassification-ssd/YOUth10mSignatures/',
+                   f'configs/modality/md{i}_config.yaml', 'exp/YOUth_cross', f'{fold}', '--log_val_results']
             print(cmd)
             subprocess.Popen(cmd).wait()
             time.sleep(10)  # Sleep for 10 seconds
@@ -37,6 +47,7 @@ def analyze_results(results):
 
 
 def read_results(path):
+    # TODO: Needs to be updated with the new val_results
     results = []
     with open(path) as f:
         for line in f:
@@ -59,6 +70,7 @@ def read_results(path):
 
 
 if __name__ == '__main__':
-    run_cross_val()
+    # run_cross_val_loss()
+    run_cross_val_modality()
     # results = read_results("val_results.txt")
     # analyze_results(results)

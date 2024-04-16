@@ -1,0 +1,13 @@
+OPTION: "rgb"
+BACKBONE: "resnet18"
+PRETRAINED: False
+COPY_RGB_WEIGHTS: False
+TARGET_SIZE: [112, 112]
+BODYPARTS_DIR: "bodyparts_split"
+DEPTHMAPS_DIR: "depth_maps"
+AUGMENTATIONS: [hflip, crop]
+MULTITASK: True  # True: use loss_weights to learn, False: 21 + 21 dimensional labels
+LR: 0.1
+BATCH_SIZE: 32
+EPOCHS: 50
+LOSS_WEIGHTS: [0.25, 0.25, 0.25, 0.25]  # 42 12 21*21 6*6
