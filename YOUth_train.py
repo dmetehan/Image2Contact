@@ -1,3 +1,4 @@
+import json
 import os
 import numpy as np
 import torch
@@ -52,7 +53,7 @@ def train_one_epoch(model, optimizer, loss_fn, loss_weights, train_loader, epoch
     all_preds = {key: [] for key in model.output_keys}
     for i, data in enumerate(train_loader):
         # Every data instance is an input + label pair
-        _, inputs, labels = data
+        _, inputs, labels, meta = data
         for key in all_labels:
             labels[key] = labels[key].to(device)
             all_labels[key] += labels[key].detach().cpu().tolist()
@@ -142,9 +143,11 @@ def train_model(model, optimizer, scheduler, loss_fn_train, experiment_name, cfg
         pred_scores = {key: [] for key in model.output_keys}
         all_labels = {key: [] for key in model.output_keys}
         all_preds = {key: [] for key in model.output_keys}
+        all_meta = []
         with torch.no_grad():
             for i, vdata in enumerate(val_loader):
-                _, vinputs, vlabels = vdata
+                _, vinputs, vlabels, vmeta = vdata
+                all_meta.append(vmeta)
                 for key in all_labels:
                     vlabels[key] = vlabels[key].to(device)
                     all_labels[key] += vlabels[key].detach().cpu().tolist()
@@ -162,6 +165,8 @@ def train_model(model, optimizer, scheduler, loss_fn_train, experiment_name, cfg
         vjaccard = {}
         for key in all_labels:
             vjaccard[key] = jaccard_score(all_labels[key], all_preds[key], average='micro', zero_division=0)
+        all_eval_labels = {'42': all_labels['42'], '12': all_labels['12'], '21x21': all_labels['21*21'], '6x6': all_labels['6*6']}
+
         kwargs = {'epoch': epoch, 'save_dir': os.path.join(save_dir, 'thresholding', 'val'), 'average': 'micro'}
         vis_threshold_eval(all_labels, pred_scores, jaccard_score, **kwargs)
         avg_vloss = running_vloss / (i + 1)
@@ -188,6 +193,8 @@ def train_model(model, optimizer, scheduler, loss_fn_train, experiment_name, cfg
         for key in best_validation_scores:
             if best_validation_scores[key][key] < vjaccard[key]:
                 best_validation_scores[key] = vjaccard.copy()
+                save_preds = {'preds': all_preds, 'labels': all_eval_labels, 'metadata': all_meta}
+                json.dump(save_preds, open(os.path.join(save_dir, "save_preds.json"), 'w'))
         # if vacc_blncd > best_vacc_blncd:
         #     best_vacc_blncd = vacc_blncd
         #     model_path = '{}/{}_{}_{}'.format(exp_dir, experiment_name, timestamp, epoch + 1)

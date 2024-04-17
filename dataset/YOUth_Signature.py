@@ -432,7 +432,12 @@ class YOUth10mSignature(Dataset):
             raise NotImplementedError()
 
         data, label = self.do_augmentations(data, label, idx, augment)
-        return idx, data, label
+        metadata = self.get_subj_frame(idx)
+        return idx, data, label, metadata
+
+    def get_subj_frame(self, idx):
+        subj, frame = self.img_labels_dets.loc[idx, "crop_path"].split('/')[-2:]
+        return subj, frame
 
     def do_augmentations(self, data, label, idx, augment):
         for aug in augment:
