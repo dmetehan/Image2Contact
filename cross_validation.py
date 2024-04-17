@@ -16,7 +16,7 @@ def run_cross_val_loss():
 
 
 def run_cross_val_modality():
-    for i in range(5):
+    for i in range(5, 7):
         for fold in range(1, 5):
             cmd = ['venv/bin/python', 'YOUth_train.py',
                    '/home/sac/GithubRepos/ContactClassification-ssd/YOUth10mSignatures/',
@@ -106,10 +106,10 @@ def read_results(path, is_loss=True):
 
 if __name__ == '__main__':
     # run_cross_val_loss()
-    # run_cross_val_modality()
+    run_cross_val_modality()
 
-    results = read_results("val_results_modality.txt", is_loss=False)
-    analyze_results_modality(results)
+    # results = read_results("val_results_modality.txt", is_loss=False)
+    # analyze_results_modality(results)
 
     # results = read_results("val_results_loss.txt", is_loss=True)
     # analyze_results_loss(results)
