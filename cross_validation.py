@@ -27,7 +27,7 @@ def run_cross_val_modality():
 
 
 def run_cross_val_backbones():
-    for i in range(3):
+    for i in range(1, 3):
         for fold in range(1, 5):
             cmd = ['venv/bin/python', 'YOUth_train.py',
                    '/home/sac/GithubRepos/ContactClassification-ssd/YOUth10mSignatures/',
