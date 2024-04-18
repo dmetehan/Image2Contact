@@ -507,9 +507,9 @@ def init_datasets(root_dir, _, batch_size, option=Options.jointmaps, target_size
                                      bodyparts_dir=bodyparts_dir, depthmaps_dir=depthmaps_dir, _set='test', fold=fold)
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True,
                                                num_workers=num_workers)
-    validation_loader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size, shuffle=False,
+    validation_loader = torch.utils.data.DataLoader(val_dataset, batch_size=1, shuffle=False,
                                                     num_workers=num_workers)
-    test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=batch_size, shuffle=False,
+    test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=1, shuffle=False,
                                               num_workers=num_workers)
 
     return train_loader, validation_loader, test_loader
