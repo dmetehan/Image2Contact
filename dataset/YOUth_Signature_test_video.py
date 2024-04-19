@@ -305,11 +305,12 @@ class YOUth10mSignatureTestVideo(Dataset):
         return np.transpose(np.asarray(optical_flow, dtype=np.float32), (2, 0, 1))  # reorder dimensions
 
     def get_label(self, idx, swap=False):
-        onehot = {'42': self.onehot_segmentation(self.img_labels_dets.loc[idx, "seg21_adult"], self.img_labels_dets.loc[idx, "seg21_child"], res=21, swap=swap),
-                  '12': self.onehot_segmentation(self.img_labels_dets.loc[idx, "seg6_adult"], self.img_labels_dets.loc[idx, "seg6_child"], res=6, swap=swap),
-                  '21*21': self.onehot_sig(self.img_labels_dets.loc[idx, "signature21x21"], res=21, swap=swap),
-                  '6*6': self.onehot_sig(self.img_labels_dets.loc[idx, "signature6x6"], res=6, swap=swap)}
-        return onehot
+        #onehot = {'42': self.onehot_segmentation(self.img_labels_dets.loc[idx, "seg21_adult"], self.img_labels_dets.loc[idx, "seg21_child"], res=21, swap=swap),
+        #          '12': self.onehot_segmentation(self.img_labels_dets.loc[idx, "seg6_adult"], self.img_labels_dets.loc[idx, "seg6_child"], res=6, swap=swap),
+        #          '21*21': self.onehot_sig(self.img_labels_dets.loc[idx, "signature21x21"], res=21, swap=swap),
+        #          '6*6': self.onehot_sig(self.img_labels_dets.loc[idx, "signature6x6"], res=6, swap=swap)}
+        #return onehot
+        return 0
 
     @staticmethod
     def onehot_segmentation(adult_seg, child_seg, res=21, swap=False):
@@ -352,7 +353,7 @@ class YOUth10mSignatureTestVideo(Dataset):
         return lambda x: mapping[x]
 
     def __getitem__(self, idx):
-        augment = self.augment if self._set == 'train' else ()
+        augment = ()
         if idx >= len(self):
             raise IndexError()
         if self.option == Options.debug:
@@ -502,7 +503,7 @@ def test_get_joint_hmaps():
     data_loader = torch.utils.data.DataLoader(dataset, batch_size=1)
     dataiter = iter(data_loader)
     count = 0
-    for idx, data, label in dataiter:
+    for idx, data, label, metadata in dataiter:
         count += len(label)
         if count % 100 == 0:
             print(count)
