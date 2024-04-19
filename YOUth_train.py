@@ -195,7 +195,7 @@ def train_model(model, optimizer, scheduler, loss_fn_train, experiment_name, cfg
                 best_validation_scores[key] = vjaccard.copy()
                 save_preds = {'preds': all_preds,
                               'labels': all_eval_labels,
-                              'scores': {key: torch.sigmoid(torch.Tensor(pred_scores[key])) for key in pred_scores},
+                              'scores': {key: torch.sigmoid(torch.Tensor(pred_scores[key])).tolist() for key in pred_scores},
                               'metadata': all_meta}
                 json.dump(save_preds, open(os.path.join(save_dir, "save_preds.json"), 'w'))
         # if vacc_blncd > best_vacc_blncd:
