@@ -33,9 +33,9 @@ class YOUth10mSignatureTestVideo(Dataset):
         else:
             self.resize = tuple(target_size)
         self.target_size = target_size
-        self.heatmaps_dir = os.path.join(root_dir, "heatmaps", camera)
-        self.gauss_hmaps_dir = os.path.join(root_dir, "gauss_hmaps", camera)
-        self.joint_hmaps_dir = os.path.join(root_dir, "joint_hmaps", camera)
+        self.heatmaps_dir = os.path.join(root_dir, "heatmaps")
+        self.gauss_hmaps_dir = os.path.join(root_dir, "gauss_hmaps")
+        self.joint_hmaps_dir = os.path.join(root_dir, "joint_hmaps")
         self.opticalflow_dir = os.path.join(root_dir, "optical_flow")
         self.crops_dir = os.path.join(root_dir, "crops")
         if bodyparts_dir:
@@ -136,10 +136,11 @@ class YOUth10mSignatureTestVideo(Dataset):
         return x1, y1, x2, y2
 
     def get_joint_hmaps(self, idx, rgb=False):
+        print("Calculating joint hmaps")
         label = self.get_label(idx)
         crop_path = self.img_labels_dets.loc[idx, "crop_path"]
-        subject_frame_path = '_'.join(crop_path.split('/')[-2:])
-        joint_hmap_path = f'{os.path.join(self.joint_hmaps_dir, subject_frame_path)}.npy'
+        frame = crop_path.split('/')[-1]
+        joint_hmap_path = f'{os.path.join(self.joint_hmaps_dir, frame)}.npy'
         if os.path.exists(joint_hmap_path):
             joint_hmaps = np.array(np.load(joint_hmap_path), dtype=np.float32)
             if joint_hmaps.shape[1:] != self.resize:
@@ -170,9 +171,11 @@ class YOUth10mSignatureTestVideo(Dataset):
             return np.zeros((34 if not rgb else 37, self.resize[0], self.resize[1]), dtype=np.float32), label
 
         crop = Image.open(crop_path)
-        heatmap_path = f'{os.path.join(self.heatmaps_dir, subject_frame_path)}.npy'
+        heatmap_path = f'{os.path.join(self.heatmaps_dir, frame)}.npy'
+        print(heatmap_path)
         if not os.path.exists(heatmap_path):
             # no detections
+            print("no detections")
             return np.zeros((34 if not rgb else 37, self.resize[0], self.resize[1]), dtype=np.float32), label
         hmap = np.load(heatmap_path)
         if hmap.shape[0] == 1:
