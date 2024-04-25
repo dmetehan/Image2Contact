@@ -96,21 +96,23 @@ def analyze_results_backbones(results):
     ordered_keys = ['6+6', '6x6', '21+21', '21x21']
     ordered_keys_2 = ['12', '6x6', '42', '21x21']
     print(f"{'Backbone':^6s}", end='&\t')
-    for k, key in enumerate(ordered_keys):
-        print(f"{key:^14s}",
-              end=' &\t' if k < len(ordered_keys) - 1 else ' \\\\\t')
+    for k, key in enumerate(all_backbones):
+        print(f"{all_backbones[key]:^14s}",
+              end=' &\t' if k < len(all_backbones) - 1 else ' \\\\\t')
     print()
+    all_combined = {bb: {} for bb in all_backbones}
     for res in results:
         backbone = res[-1]
         combined = {key: [res[0][key]] for key in res[0] if key != "best_epoch"}
         for one_result in res[1:-1]:
             for key in combined:
                 combined[key].append(one_result[key])
-        print(f'{all_backbones[backbone]:^6s}', end='&\t')
-        for k, key in enumerate(ordered_keys_2):
-            print(f"{f'{np.mean(combined[key]) * 100:.2f}':>6s} ({np.std(combined[key]) * 100:.2f})",
-                  end=' &\t' if k < len(ordered_keys_2) - 1 else ' \\\\\t')
-        print()
+        all_combined[backbone] = combined
+    for k, key in enumerate(ordered_keys_2):
+        for b, bb in enumerate(all_backbones):
+            print(f"{f'{np.mean(all_combined[bb][key]) * 100:.2f}':>6s} ({np.std(all_combined[bb][key]) * 100:.2f})",
+                  end=' &\t' if b < len(all_backbones) - 1 else ' \\\\\n')
+    print()
 
 
 def read_results(path, is_loss=True):
@@ -142,15 +144,15 @@ def read_results(path, is_loss=True):
 
 
 if __name__ == '__main__':
-    run_cross_val_loss()
+    # run_cross_val_loss()
     #run_cross_val_modality()
     #run_cross_val_backbones()
 
     # results = read_results("val_results_modality.txt", is_loss=False)
     # analyze_results_modality(results)
 
-    # results = read_results("val_results_backbones.txt", is_loss=False)
-    # analyze_results_backbones(results)
+    results = read_results("val_results_backbones.txt", is_loss=False)
+    analyze_results_backbones(results)
 
     # results = read_results("val_results_loss.txt", is_loss=True)
     # analyze_results_loss(results)
