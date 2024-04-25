@@ -34,17 +34,18 @@ def get_predictions(model, test_loader, cfg, exp_dir="YOUth"):
     all_meta = []
     with torch.no_grad():
         for i, vdata in enumerate(test_loader):
-            _, vinputs, vlabels, vmeta = vdata
+            _, vinputs, _, vmeta = vdata
             all_meta.append(vmeta)
             vinputs = vinputs.to(device)
             voutputs_list = model(vinputs)
-            for k, key in enumerate(vlabels):
+            for k, key in enumerate(pred_scores):
                 pred_scores[key] += voutputs_list[k].detach().cpu().tolist()
                 all_preds[key] += (torch.sigmoid(voutputs_list[k].detach().cpu()) > model.thresholds[key]).long().tolist()
 
     save_preds = {'preds': all_preds,
                   'scores': {key: torch.sigmoid(torch.Tensor(pred_scores[key])).tolist() for key in pred_scores},
                   'metadata': all_meta}
+    os.makedirs(save_dir, exist_ok=True)
     json.dump(save_preds, open(os.path.join(save_dir, "test_video_preds.json"), 'w'))
 
 

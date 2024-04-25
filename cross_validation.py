@@ -138,15 +138,15 @@ def read_results(path, is_loss=True):
 
 
 if __name__ == '__main__':
-    # run_cross_val_loss()
+    run_cross_val_loss()
     # run_cross_val_modality()
     # run_cross_val_backbones()
 
     # results = read_results("val_results_modality.txt", is_loss=False)
     # analyze_results_modality(results)
 
-    results = read_results("val_results_backbones.txt", is_loss=False)
-    analyze_results_backbones(results)
+    # results = read_results("val_results_backbones.txt", is_loss=False)
+    # analyze_results_backbones(results)
 
     # results = read_results("val_results_loss.txt", is_loss=True)
     # analyze_results_loss(results)

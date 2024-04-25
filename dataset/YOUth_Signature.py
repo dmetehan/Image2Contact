@@ -77,13 +77,15 @@ class YOUth10mSignature(Dataset):
     def convert_folds_to_sets(folds_path):
         with open(folds_path) as f:
             folds = json.load(f)
-        fold_sets = []
+        fold_sets = {}
         for f in range(len(folds)):
-            fold_sets.append({'test': folds[f],
-                              'val': folds[f],
-                              'train': list(itertools.chain.from_iterable([folds[i]
-                                                                           for i in range(len(folds)) if i != f]))
-                              })
+            fold_sets[f] = {'test': folds[f],
+                            'val': folds[f],
+                            'train': list(itertools.chain.from_iterable([folds[i]
+                                                                         for i in range(len(folds)) if i != f]))
+                           }
+        fold_sets[99] = {'test': ["B50284"], 'val': ["B50284"], 'train': list(itertools.chain.from_iterable([folds[i] for i in range(len(folds))]))}
+        fold_sets[99]['train'].remove("B50284")
         return fold_sets
 
     # @staticmethod

@@ -136,7 +136,6 @@ class YOUth10mSignatureTestVideo(Dataset):
         return x1, y1, x2, y2
 
     def get_joint_hmaps(self, idx, rgb=False):
-        print("Calculating joint hmaps")
         label = self.get_label(idx)
         crop_path = self.img_labels_dets.loc[idx, "crop_path"]
         frame = crop_path.split('/')[-1]
@@ -233,7 +232,7 @@ class YOUth10mSignatureTestVideo(Dataset):
 
     def get_bodyparts(self, idx):
         part_ids = [0, 13, 18, 24, 21, 20, 11, 8, 12, 6, 2, 16, 5, 25, 22]
-        bodyparts_path = f"{os.path.join(self.bodyparts_dir, 'cam1', '/'.join(self.img_labels_dets.loc[idx, 'crop_path'].split('/')[-2:]))}"
+        bodyparts_path = f"{os.path.join(self.bodyparts_dir, self.img_labels_dets.loc[idx, 'crop_path'].split('/')[-1])}"
         bodyparts_base_path = f'{bodyparts_path.split(".")[0]}'
         if os.path.exists(bodyparts_path):
             # convert colors into boolean maps per body part channel (+background)
@@ -413,8 +412,8 @@ class YOUth10mSignatureTestVideo(Dataset):
         return idx, data, label, metadata
 
     def get_subj_frame(self, idx):
-        subj, frame = self.img_labels_dets.loc[idx, "crop_path"].split('/')[-2:]
-        return subj, frame
+        frame = self.img_labels_dets.loc[idx, "crop_path"].split('/')[-1]
+        return "B50284", frame
 
     def do_augmentations(self, data, label, idx, augment):
         for aug in augment:
