@@ -1,11 +1,11 @@
-OPTION: "jointmaps_rgb_bodyparts"
+OPTION: "rgb"
 BACKBONE: "resnet18"
-PRETRAINED: True
-COPY_RGB_WEIGHTS: True
+PRETRAINED: False
+COPY_RGB_WEIGHTS: False
 TARGET_SIZE: [112, 112]
 BODYPARTS_DIR: "bodyparts_split"
 DEPTHMAPS_DIR: "depth_maps"
-AUGMENTATIONS: [hflip, crop, color]
+AUGMENTATIONS: [crop]
 MULTITASK: True  # True: use loss_weights to learn, False: 21 + 21 dimensional labels
 LR: 0.1
 BATCH_SIZE: 32

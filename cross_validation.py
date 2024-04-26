@@ -6,11 +6,7 @@ import numpy as np
 
 def run_cross_val_loss():
     for i in range(6):
-        if i != 2:
-            continue
         for fold in range(1, 5):
-            if fold != 1:
-                continue
             cmd = ['venv/bin/python', 'YOUth_train.py',
                    '/home/sac/GithubRepos/ContactClassification-ssd/YOUth10mSignatures/',
                    f'configs/loss_weights/lw{i}_config.yaml', 'exp/YOUth_cross', f'{fold}', '--log_val_results']
@@ -20,7 +16,7 @@ def run_cross_val_loss():
 
 
 def run_cross_val_modality():
-    for i in range(7):
+    for i in range(5):
         for fold in range(1, 5):
             cmd = ['venv/bin/python', 'YOUth_train.py',
                    '/home/sac/GithubRepos/ContactClassification-ssd/YOUth10mSignatures/',
@@ -142,8 +138,8 @@ def read_results(path, is_loss=True):
 
 
 if __name__ == '__main__':
-    run_cross_val_loss()
-    #run_cross_val_modality()
+    #run_cross_val_loss()
+    run_cross_val_modality()
     #run_cross_val_backbones()
 
     # results = read_results("val_results_modality.txt", is_loss=False)
