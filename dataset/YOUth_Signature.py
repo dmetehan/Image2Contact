@@ -27,9 +27,9 @@ class YOUth10mSignature(Dataset):
                  _set=None, train_frac=None, fold=0):
         # Using folds from Pose2Contact
         self.camera = camera
-        pose2contact_dir = '/home/sac/GithubRepos/Pose2Contact/data/youth/signature'
-        folds_path = os.path.join(pose2contact_dir, 'all', 'folds.json')
-        fold_dir = os.path.join(pose2contact_dir, f'fold{fold}', f'{_set}')
+        fold_data_dir = 'data/youth/signature'
+        folds_path = os.path.join(fold_data_dir, 'all', 'folds.json')
+        fold_dir = os.path.join(fold_data_dir, f'fold{fold}', f'{_set}')
         self.fold_sets = self.convert_folds_to_sets(folds_path)
         set_subjects = self.fold_sets[fold][_set]
         self._set = _set
@@ -94,7 +94,7 @@ class YOUth10mSignature(Dataset):
     #         "DUPLICATES FOUND IN img_labels"
     #     missing_frames = defaultdict(list)
     #     for index, row in img_labels.iterrows():
-    #         crop_path = f"/home/sac/GithubRepos/ContactClassification-ssd/YOUth10mSignatures/all/crops/cam1/{row['subject']}/{row['frame']}"
+    #         crop_path = f"~/GithubRepos/ContactClassification-ssd/YOUth10mSignatures/all/crops/cam1/{row['subject']}/{row['frame']}"
     #         if crop_path not in img_labels_dets['crop_path'].unique():
     #             print(crop_path)
     #             missing_frames[row['subject']].append(crop_path)
@@ -519,7 +519,7 @@ def init_datasets(root_dir, _, batch_size, option=Options.jointmaps, target_size
 
 def test_class():
     option = Options.jointmaps_rgb_bodyparts
-    root_dir = '/home/sac/GithubRepos/ContactClassification-ssd/YOUth10mClassification/all'
+    root_dir = '~/GithubRepos/ContactClassification-ssd/YOUth10mClassification/all'
     train_loader, validation_loader, test_loader = init_datasets(root_dir, root_dir, batch_size=1, option=option,
                                                                  num_workers=1, bodyparts_dir='bodyparts_split')
     # print(len(train_loader))
@@ -537,7 +537,7 @@ def test_class():
 
 def test_get_joint_hmaps():
     option = Options.jointmaps
-    root_dir = '/home/sac/GithubRepos/ContactClassification-ssd/YOUth10mSignatures/all'
+    root_dir = '~/GithubRepos/ContactClassification-ssd/YOUth10mSignatures/all'
     for _set in ['train', 'val', 'test']:
         dataset = YOUth10mSignature(root_dir, option=option, recalc_joint_hmaps=True, _set=_set)
         data_loader = torch.utils.data.DataLoader(dataset, batch_size=1)

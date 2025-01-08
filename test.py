@@ -23,10 +23,10 @@ _ = ContactSignatureModel()
 from dataset.FlickrCI3D_Signature import init_datasets_with_cfg
 # from dataset.YOUth10mClassification import init_datasets
 
-train_dir = '/home/sac/GithubRepos/ContactClassification-ssd/FlickrCI3DClassification/train'
+train_dir = '~/GithubRepos/ContactClassification-ssd/FlickrCI3DClassification/train'
 # train_dir = ''
-test_dir = '/home/sac/GithubRepos/ContactClassification-ssd/FlickrCI3DClassification/test'
-# test_dir = '/home/sac/GithubRepos/ContactClassification-ssd/YOUth10mClassification/test'
+test_dir = '~/GithubRepos/ContactClassification-ssd/FlickrCI3DClassification/test'
+# test_dir = '~/GithubRepos/ContactClassification-ssd/YOUth10mClassification/test'
 classes = ("no touch", "touch")
 
 
@@ -101,8 +101,8 @@ def main():
     if not os.path.exists(args.config_file):
         raise FileNotFoundError(f"{args.config_file} could not be found!")
     cfg = parse_config(args.config_file)
-    train_dir_ssd = '/home/sac/GithubRepos/ContactClassification-ssd/FlickrCI3DSignatures/train'
-    test_dir_ssd = '/home/sac/GithubRepos/ContactClassification-ssd/FlickrCI3DSignatures/test'
+    train_dir_ssd = '~/GithubRepos/ContactClassification-ssd/FlickrCI3DSignatures/train'
+    test_dir_ssd = '~/GithubRepos/ContactClassification-ssd/FlickrCI3DSignatures/test'
     exp_name = get_experiment_name(cfg)
     exp_dir = "exp/Flickr"
     train_loader, validation_loader, test_loader = init_datasets_with_cfg(train_dir_ssd, test_dir_ssd, cfg)

@@ -12,7 +12,7 @@ def run_cross_val_loss():
             if fold != 1:
                 continue
             cmd = ['venv/bin/python', 'YOUth_train.py',
-                   '/home/sac/GithubRepos/ContactClassification-ssd/YOUth10mSignatures/',
+                   '~/GithubRepos/ContactClassification-ssd/YOUth10mSignatures/',
                    f'configs/loss_weights/lw{i}_config.yaml', 'exp/YOUth_cross', f'{fold}', '--log_val_results']
             print(cmd)
             subprocess.Popen(cmd).wait()
@@ -23,7 +23,7 @@ def run_cross_val_modality():
     for i in range(5):
         for fold in range(1, 5):
             cmd = ['venv/bin/python', 'YOUth_train.py',
-                   '/home/sac/GithubRepos/ContactClassification-ssd/YOUth10mSignatures/',
+                   '~/GithubRepos/ContactClassification-ssd/YOUth10mSignatures/',
                    f'configs/modality/md{i}_config.yaml', 'exp/YOUth_cross', f'{fold}', '--log_val_results']
             print(cmd)
             subprocess.Popen(cmd).wait()
@@ -34,7 +34,7 @@ def run_cross_val_backbones():
     for i in range(1, 3):
         for fold in range(1, 5):
             cmd = ['venv/bin/python', 'YOUth_train.py',
-                   '/home/sac/GithubRepos/ContactClassification-ssd/YOUth10mSignatures/',
+                   '~/GithubRepos/ContactClassification-ssd/YOUth10mSignatures/',
                    f'configs/backbones/bb{i}_config.yaml', 'exp/YOUth_cross', f'{fold}', '--log_val_results']
             print(cmd)
             subprocess.Popen(cmd).wait()
