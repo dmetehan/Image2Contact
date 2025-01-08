@@ -16,7 +16,7 @@ To annotate your own data with contact signatures you can use our annotation too
 
 ## TODO:
 
-- [ ] Uploading Model Weights
+- [+] Uploading Model Weights
 - [ ] Demo script
 - [ ] Installation Instructions
 
