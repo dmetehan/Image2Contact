@@ -25,7 +25,7 @@ from dataset.YOUth_Signature_test_video import init_datasets_with_cfg
 
 
 def get_predictions(model, test_loader, cfg, exp_dir="YOUth"):
-    save_dir = os.path.join(exp_dir, "test_video")
+    save_dir = os.path.join(exp_dir, "test_video", "B00432")
     model = model.to(device)
     # We don't need gradients on to do reporting
     model.train(False)

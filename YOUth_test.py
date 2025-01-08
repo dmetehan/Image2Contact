@@ -33,7 +33,7 @@ def test_model(model, model_name, save_dir, data_loader, test_set, device):
     # since we're not training, we don't need to calculate the gradients for our outputs
     with torch.no_grad():
         for i, vdata in enumerate(data_loader):
-            _, inputs, labels = vdata
+            _, inputs, labels, _ = vdata
             for key in all_labels:
                 labels[key] = labels[key].to(device)
                 all_labels[key] += labels[key].detach().cpu().tolist()
